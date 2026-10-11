@@ -4,7 +4,7 @@
 $customers = $db->query("SELECT id, username, email, created_at FROM users WHERE role != 'admin' OR role IS NULL ORDER BY id DESC")->fetchAll();
 
 // Ambil daftar promo
-$promos = $db->query("SELECT * FROM promos ORDER BY id DESC")->fetchAll();
+$promos = $db->query('SELECT * FROM promos ORDER BY id DESC')->fetchAll();
 ?>
 <?php require_once 'header.php'; ?>
 
@@ -32,24 +32,24 @@ $promos = $db->query("SELECT * FROM promos ORDER BY id DESC")->fetchAll();
                         <tr><th>ID</th><th>Username</th><th>Email</th><th>Terdaftar</th><th>Total Pesanan</th><th>Total Belanja</th></tr>
                     </thead>
                     <tbody>
-                    <?php foreach($customers as $c): 
+                    <?php foreach ($customers as $c) {
                         // Ambil statistik pesanan per customer
-                        $stmt = $db->prepare("SELECT COUNT(*) as total_order, COALESCE(SUM(total),0) as total_spent FROM orders WHERE user_id = ?");
+                        $stmt = $db->prepare('SELECT COUNT(*) as total_order, COALESCE(SUM(total),0) as total_spent FROM orders WHERE user_id = ?');
                         $stmt->execute([$c['id']]);
                         $stats = $stmt->fetch();
-                    ?>
+                        ?>
                     <tr>
-                        <td><?=$c['id']?></td>
-                        <td><?=e($c['username'])?></td>
-                        <td><?=e($c['email'])?></td>
-                        <td style="font-size:.82rem"><?=date('d M Y', strtotime($c['created_at']))?></td>
-                        <td><?=$stats['total_order']?></td>
-                        <td><?=rupiah($stats['total_spent'])?></td>
+                        <td><?= $c['id']?></td>
+                        <td><?= e($c['username'])?></td>
+                        <td><?= e($c['email'])?></td>
+                        <td style="font-size:.82rem"><?= date('d M Y', strtotime($c['created_at']))?></td>
+                        <td><?= $stats['total_order']?></td>
+                        <td><?= rupiah($stats['total_spent'])?></td>
                     </tr>
-                    <?php endforeach; ?>
-                    <?php if(empty($customers)): ?>
+                    <?php } ?>
+                    <?php if (empty($customers)) { ?>
                     <tr><td colspan="6" class="text-center">Belum ada pelanggan</td></tr>
-                    <?php endif; ?>
+                    <?php } ?>
                     </tbody>
                 </table>
             </div>
@@ -66,38 +66,38 @@ $promos = $db->query("SELECT * FROM promos ORDER BY id DESC")->fetchAll();
                         <tr><th>Kode</th><th>Diskon</th><th>Min. Belanja</th><th>Berlaku</th><th>Terpakai / Limit</th><th>Status</th><th>Aksi</th></tr>
                     </thead>
                     <tbody>
-                    <?php foreach($promos as $p): 
+                    <?php foreach ($promos as $p) {
                         $expired = (strtotime($p['valid_until']) < time());
-                        $active = ($p['active'] && !$expired);
-                    ?>
+                        $active = ($p['active'] && ! $expired);
+                        ?>
                     <tr>
-                        <td><strong><?=e($p['code'])?></strong></td>
-                        <td><?= $p['discount_type']=='percent' ? $p['discount_value'].'%' : rupiah($p['discount_value']) ?></td>
+                        <td><strong><?= e($p['code'])?></strong></td>
+                        <td><?= $p['discount_type'] == 'percent' ? $p['discount_value'].'%' : rupiah($p['discount_value']) ?></td>
                         <td><?= $p['min_purchase'] > 0 ? rupiah($p['min_purchase']) : 'Tanpa minimal' ?></td>
                         <td style="font-size:.75rem">
-                            <?=date('d/m/Y', strtotime($p['valid_from']))?> - <?=date('d/m/Y', strtotime($p['valid_until']))?>
+                            <?= date('d/m/Y', strtotime($p['valid_from']))?> - <?= date('d/m/Y', strtotime($p['valid_until']))?>
                         </td>
-                        <td><?=$p['used_count']?> / <?=$p['usage_limit'] ?? '∞'?></td>
+                        <td><?= $p['used_count']?> / <?= $p['usage_limit'] ?? '∞'?></td>
                         <td>
-                            <?php if($expired): ?>
+                            <?php if ($expired) { ?>
                                 <span class="stb st-cancelled">Kadaluarsa</span>
-                            <?php elseif($p['active']): ?>
+                            <?php } elseif ($p['active']) { ?>
                                 <span class="stb st-confirmed">Aktif</span>
-                            <?php else: ?>
+                            <?php } else { ?>
                                 <span class="stb st-pending">Nonaktif</span>
-                            <?php endif; ?>
+                            <?php } ?>
                         </td>
                         <td>
                             <div class="d-flex gap-1">
-                                <button class="btn btn-sm btn-o" onclick="editPromo(<?=$p['id']?>,'<?=e($p['code'])?>','<?=$p['discount_type']?>','<?=$p['discount_value']?>','<?=$p['min_purchase']?>','<?=date('Y-m-d\TH:i',strtotime($p['valid_from']))?>','<?=date('Y-m-d\TH:i',strtotime($p['valid_until']))?>','<?=$p['usage_limit']?>','<?=$p['active']?>')"><i class="fas fa-edit"></i></button>
-                                <a href="../process.php?action=delete_promo&id=<?=$p['id']?>" class="btn btn-sm btn-d" onclick="return confirm('Hapus kupon ini?')"><i class="fas fa-trash"></i></a>
+                                <button class="btn btn-sm btn-o" onclick="editPromo(<?= $p['id']?>,'<?= e($p['code'])?>','<?= $p['discount_type']?>','<?= $p['discount_value']?>','<?= $p['min_purchase']?>','<?= date('Y-m-d\TH:i', strtotime($p['valid_from']))?>','<?= date('Y-m-d\TH:i', strtotime($p['valid_until']))?>','<?= $p['usage_limit']?>','<?= $p['active']?>')"><i class="fas fa-edit"></i></button>
+                                <a href="../process.php?action=delete_promo&id=<?= $p['id']?>" class="btn btn-sm btn-d" onclick="return confirm('Hapus kupon ini?')"><i class="fas fa-trash"></i></a>
                             </div>
                         </td>
                     </tr>
-                    <?php endforeach; ?>
-                    <?php if(empty($promos)): ?>
+                    <?php } ?>
+                    <?php if (empty($promos)) { ?>
                     <tr><td colspan="7" class="text-center">Belum ada promo</td></tr>
-                    <?php endif; ?>
+                    <?php } ?>
                     </tbody>
                 </table>
             </div>

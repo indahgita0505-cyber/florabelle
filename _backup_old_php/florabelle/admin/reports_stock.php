@@ -2,7 +2,7 @@
 <?php
 // Prediksi kebutuhan berdasarkan penjualan tahun lalu (tidak ditampilkan lagi, tapi data mungkin masih dipakai? kita hapus saja)
 // Langsung ambil produk untuk stok satuan
-$products = $db->query("SELECT id, name, stock, category FROM products ORDER BY name")->fetchAll();
+$products = $db->query('SELECT id, name, stock, category FROM products ORDER BY name')->fetchAll();
 
 // Data untuk rekomendasi pemesanan (best seller tahun lalu)
 $lastYear = date('Y') - 1;
@@ -36,27 +36,27 @@ $bestSellers = $stmt->fetchAll();
                         <tr><th>Produk</th><th>Kategori</th><th>Stok (produk)</th><th>Estimasi Satuan (tangkai)</th><th>Aksi</th></tr>
                     </thead>
                     <tbody>
-                    <?php foreach($products as $p): 
-                        $stmt = $db->prepare("SELECT stock_units FROM product_stock_details WHERE product_id = ?");
+                    <?php foreach ($products as $p) {
+                        $stmt = $db->prepare('SELECT stock_units FROM product_stock_details WHERE product_id = ?');
                         $stmt->execute([$p['id']]);
                         $detail = $stmt->fetch();
                         $unitStock = $detail ? $detail['stock_units'] : ($p['stock'] * 10); // asumsi 1 produk = 10 tangkai
-                    ?>
+                        ?>
                         <tr>
-                            <td><?=e($p['name'])?></td>
-                            <td><?=e($p['category'])?></td>
-                            <td><span class="badge bg-secondary"><?=$p['stock']?></span></td>
-                            <td><?=$unitStock?> tangkai</td>
+                            <td><?= e($p['name'])?></td>
+                            <td><?= e($p['category'])?></td>
+                            <td><span class="badge bg-secondary"><?= $p['stock']?></span></td>
+                            <td><?= $unitStock?> tangkai</td>
                             <td>
                                 <form method="post" action="../process.php" class="row g-1">
                                     <input type="hidden" name="action" value="update_unit_stock">
-                                    <input type="hidden" name="product_id" value="<?=$p['id']?>">
-                                    <div class="col-auto"><input type="number" name="stock_units" value="<?=$unitStock?>" class="form-control form-control-sm" style="width:100px"></div>
+                                    <input type="hidden" name="product_id" value="<?= $p['id']?>">
+                                    <div class="col-auto"><input type="number" name="stock_units" value="<?= $unitStock?>" class="form-control form-control-sm" style="width:100px"></div>
                                     <div class="col-auto"><button class="btn btn-sm btn-primary">Simpan</button></div>
                                 </form>
                              </td>
                          </tr>
-                    <?php endforeach; ?>
+                    <?php } ?>
                     </tbody>
                 </table>
             </div>
@@ -67,15 +67,15 @@ $bestSellers = $stmt->fetchAll();
     <div class="card">
         <div class="card-header bg-white fw-semibold">🔄 Rekomendasi Pemesanan Stok</div>
         <div class="card-body">
-            <?php if(!empty($bestSellers)): ?>
+            <?php if (! empty($bestSellers)) { ?>
                 <ul class="list-group">
-                <?php foreach($bestSellers as $bs): ?>
-                    <li class="list-group-item"><?=e($bs['name'])?> - terjual <strong><?=$bs['total_sold']?></strong> unit tahun lalu. Persiapkan minimal <strong><?=ceil($bs['total_sold'] * 1.2)?></strong> unit untuk tahun ini.</li>
-                <?php endforeach; ?>
+                <?php foreach ($bestSellers as $bs) { ?>
+                    <li class="list-group-item"><?= e($bs['name'])?> - terjual <strong><?= $bs['total_sold']?></strong> unit tahun lalu. Persiapkan minimal <strong><?= ceil($bs['total_sold'] * 1.2)?></strong> unit untuk tahun ini.</li>
+                <?php } ?>
                 </ul>
-            <?php else: ?>
+            <?php } else { ?>
                 <p class="text-muted">Belum ada data penjualan tahun lalu.</p>
-            <?php endif; ?>
+            <?php } ?>
         </div>
     </div>
 </div>

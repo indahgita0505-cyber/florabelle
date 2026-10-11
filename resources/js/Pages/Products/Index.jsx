@@ -5,7 +5,10 @@ import { useState } from 'react';
 export default function Index({ products = [] }) {
     const { auth, flash } = usePage().props;
     const [addingId, setAddingId] = useState(null);
+    const [buyingId, setBuyingId] = useState(null);
     const [toastMsg, setToastMsg] = useState(null);
+
+    const isAdmin = auth?.user?.role === 'admin';
 
     const [search, setSearch] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
@@ -39,7 +42,7 @@ export default function Index({ products = [] }) {
         }, {
             preserveScroll: true,
             onSuccess: () => {
-                setToastMsg('Berhasil ditambahkan ke keranjang! ');
+                setToastMsg('Berhasil ditambahkan ke keranjang!');
                 setTimeout(() => setToastMsg(null), 3000);
             },
             onError: () => {
@@ -48,6 +51,31 @@ export default function Index({ products = [] }) {
             },
             onFinish: () => {
                 setAddingId(null);
+            }
+        });
+    };
+
+    const buyNow = (productId) => {
+        if (!auth.user) {
+            router.visit(route('login'));
+            return;
+        }
+
+        setBuyingId(productId);
+        router.post(route('cart.store'), {
+            product_id: productId,
+            quantity: 1
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                router.visit(route('checkout.index'));
+            },
+            onError: () => {
+                setToastMsg('Gagal memproses pembelian.');
+                setTimeout(() => setToastMsg(null), 3000);
+            },
+            onFinish: () => {
+                setBuyingId(null);
             }
         });
     };
@@ -196,21 +224,31 @@ export default function Index({ products = [] }) {
                                         <div className="font-black text-pink-600 text-lg">
                                             Rp {Number(product.price).toLocaleString('id-ID')}
                                         </div>
-                                        {(!auth.user || auth.user.role !== 'admin') && product.stock > 0 && (
-                                            <button 
-                                                onClick={() => addToCart(product.id)}
-                                                disabled={addingId === product.id}
-                                                className="px-3.5 py-2 rounded-xl bg-pink-50 text-pink-600 font-bold text-xs flex items-center gap-1.5 hover:bg-pink-500 hover:text-white transition-all duration-200 disabled:opacity-50 shadow-sm hover:shadow"
-                                                title="Tambah ke Keranjang"
-                                            >
-                                                {addingId === product.id ? (
-                                                    <span>Menyimpan...</span>
-                                                ) : (
-                                                    <>
-                                                        <span>+ Keranjang</span>
-                                                    </>
-                                                )}
-                                            </button>
+                                        {!isAdmin && product.stock > 0 && (
+                                            <div className="flex items-center gap-2">
+                                                <button 
+                                                    onClick={() => addToCart(product.id)}
+                                                    disabled={addingId === product.id || buyingId === product.id}
+                                                    className="p-2 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 transition-all duration-200 disabled:opacity-50 border border-pink-200/60 shadow-2xs"
+                                                    title="Tambah ke Keranjang"
+                                                >
+                                                    {addingId === product.id ? (
+                                                        <span className="text-[10px] font-bold">...</span>
+                                                    ) : (
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                                <button 
+                                                    onClick={() => buyNow(product.id)}
+                                                    disabled={addingId === product.id || buyingId === product.id}
+                                                    className="px-3.5 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 active:scale-95 text-white font-bold text-xs shadow-xs transition duration-200 disabled:opacity-50"
+                                                    title="Beli Sekarang"
+                                                >
+                                                    {buyingId === product.id ? '...' : 'Beli'}
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
                                     {product.stock <= 0 && (

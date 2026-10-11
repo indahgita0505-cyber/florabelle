@@ -10,7 +10,9 @@ class BouquetOption extends Model
     use HasFactory;
 
     protected $fillable = [
+        'custom_category_id',
         'category',
+        'tab_type',
         'name',
         'image_url',
         'color_hex',
@@ -23,4 +25,9 @@ class BouquetOption extends Model
         'is_active' => 'boolean',
         'price_adjustment' => 'decimal:2',
     ];
+
+    public function customCategory()
+    {
+        return $this->belongsTo(CustomCategory::class, 'custom_category_id');
+    }
 }

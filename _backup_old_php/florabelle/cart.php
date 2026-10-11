@@ -1,8 +1,10 @@
-<?php 
-require_once 'config.php'; 
-if(!isLoggedIn()) redirect('login.php');
+<?php
+require_once 'config.php';
+if (! isLoggedIn()) {
+    redirect('login.php');
+}
 
-$stmt = $db->prepare("SELECT c.id as cart_id, c.quantity, p.* FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?");
+$stmt = $db->prepare('SELECT c.id as cart_id, c.quantity, p.* FROM cart c JOIN products p ON c.product_id = p.id WHERE c.user_id = ?');
 $stmt->execute([$_SESSION['user_id']]);
 $items = $stmt->fetchAll();
 ?>
@@ -11,9 +13,9 @@ $items = $stmt->fetchAll();
 <section class="sec-p">
     <div class="container">
         <h2 class="sec-t">Keranjang Belanja</h2>
-        <?php if(empty($items)): ?>
+        <?php if (empty($items)) { ?>
             <div class="alert alert-info">Keranjang kosong.</div>
-        <?php else: ?>
+        <?php } else { ?>
             <form method="post" action="checkout_cart.php" id="cartForm">
                 <div class="table-responsive">
                     <table class="table table-bordered align-middle">
@@ -28,36 +30,36 @@ $items = $stmt->fetchAll();
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach($items as $item): ?>
+                            <?php foreach ($items as $item) { ?>
                             <tr>
-                                <td><input type="checkbox" name="selected[]" value="<?=$item['cart_id']?>" class="item-checkbox"></td>
+                                <td><input type="checkbox" name="selected[]" value="<?= $item['cart_id']?>" class="item-checkbox"></td>
                                 <td>
                                     <div class="d-flex gap-2 align-items-center">
-                                        <?php if(!empty($item['image_url'])): ?>
-                                            <img src="<?=e($item['image_url'])?>" width="60" height="60" style="object-fit:cover; border-radius:8px">
-                                        <?php else: ?>
-                                            <div style="width:60px;height:60px;background:#eee;display:flex;align-items:center;justify-content:center;border-radius:8px"><?=$item['image']?></div>
-                                        <?php endif; ?>
-                                        <strong><?=e($item['name'])?></strong>
+                                        <?php if (! empty($item['image_url'])) { ?>
+                                            <img src="<?= e($item['image_url'])?>" width="60" height="60" style="object-fit:cover; border-radius:8px">
+                                        <?php } else { ?>
+                                            <div style="width:60px;height:60px;background:#eee;display:flex;align-items:center;justify-content:center;border-radius:8px"><?= $item['image']?></div>
+                                        <?php } ?>
+                                        <strong><?= e($item['name'])?></strong>
                                     </div>
                                  </td>
-                                <td><?=rupiah($item['price'])?></td>
+                                <td><?= rupiah($item['price'])?></td>
                                 <td>
                                     <div class="d-flex gap-1">
                                         <form method="post" action="process.php" class="d-inline">
                                             <input type="hidden" name="action" value="update_cart">
-                                            <input type="hidden" name="cart_id" value="<?=$item['cart_id']?>">
-                                            <input type="number" name="quantity" value="<?=$item['quantity']?>" min="1" max="<?=$item['stock']?>" style="width:70px" class="form-control form-control-sm">
+                                            <input type="hidden" name="cart_id" value="<?= $item['cart_id']?>">
+                                            <input type="number" name="quantity" value="<?= $item['quantity']?>" min="1" max="<?= $item['stock']?>" style="width:70px" class="form-control form-control-sm">
                                             <button type="submit" class="btn btn-sm btn-secondary mt-1">Update</button>
                                         </form>
                                     </div>
                                  </td>
-                                <td class="subtotal"><?=rupiah($item['price'] * $item['quantity'])?></td>
+                                <td class="subtotal"><?= rupiah($item['price'] * $item['quantity'])?></td>
                                 <td>
-                                    <a href="process.php?action=remove_cart&id=<?=$item['cart_id']?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus item ini?')">Hapus</a>
+                                    <a href="process.php?action=remove_cart&id=<?= $item['cart_id']?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus item ini?')">Hapus</a>
                                  </td>
                              </tr>
-                            <?php endforeach; ?>
+                            <?php } ?>
                         </tbody>
                         <tfoot>
                             <tr>
@@ -72,7 +74,7 @@ $items = $stmt->fetchAll();
                     <button type="submit" class="btn btn-primary" id="checkoutBtn" disabled>Checkout (Item Terpilih)</button>
                 </div>
             </form>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </section>
 

@@ -33,7 +33,7 @@ return new class extends Migration
                 'customer_address',
                 'payment_method',
                 'payment_status',
-                'payment_proof_url'
+                'payment_proof_url',
             ]);
         });
     }

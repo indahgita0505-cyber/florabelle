@@ -98,7 +98,9 @@
                             @foreach($items as $item)
                                 @php
                                     $pName = is_array($item) ? $item['name'] : $item->product->name;
-                                    $pCat = is_array($item) ? $item['category'] : ($item->product->category ?? 'Florist Palu');
+                                    $pCat = is_array($item)
+                                        ? ($item['category'] ?? 'Florist Palu')
+                                        : ($item->product?->category?->name ?? (is_string($item->product?->category) ? $item->product->category : 'Florist Palu'));
                                     $pPrice = is_array($item) ? $item['price'] : $item->price;
                                     $pQty = is_array($item) ? $item['quantity'] : $item->quantity;
                                     $pImg = is_array($item) ? $item['image'] : ($item->product->image_url ?? 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=400&q=80');

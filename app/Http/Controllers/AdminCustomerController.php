@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Services\KMeansClusteringService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AdminCustomerController extends Controller
 {
@@ -23,16 +23,16 @@ class AdminCustomerController extends Controller
         // Pencarian sederhana berdasarkan nama atau email
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
         // Jalankan K-Means Clustering
         $dataset = $this->buildDataset();
         $clusterLabels = [];
-        if (!empty($dataset)) {
+        if (! empty($dataset)) {
             $result = $this->kmeans->run($dataset, k: 3, seed: 42);
             foreach ($result['clusters'] as $clusterId => $members) {
                 $label = $result['labels'][$clusterId] ?? ['label' => 'Unknown', 'color' => 'gray', 'emoji' => '❓'];
@@ -44,19 +44,19 @@ class AdminCustomerController extends Controller
 
         $customers = $query->orderBy('created_at', 'desc')->get()->map(function ($user) use ($clusterLabels) {
             // Hitung total pesanan selesai (asumsi status 'Selesai / Dikirim' atau 'completed')
-            $completedOrders = $user->orders->filter(function($order) {
+            $completedOrders = $user->orders->filter(function ($order) {
                 return in_array(strtolower($order->status), ['selesai', 'selesai / dikirim', 'completed']);
             })->count();
 
             // Transform data orders agar lebih mudah dibaca di frontend
             $history = $user->orders->map(function ($order) {
                 return [
-                    'id' => 'ORD-' . $order->id,
+                    'id' => 'ORD-'.$order->id,
                     'date' => $order->created_at->format('d M Y'),
                     'total' => $order->total,
                     'status' => $order->status,
-                    'items' => $order->items->map(function($item) {
-                        return $item->product ? $item->product->name . ' (x' . $item->quantity . ')' : 'Produk Dihapus';
+                    'items' => $order->items->map(function ($item) {
+                        return $item->product ? $item->product->name.' (x'.$item->quantity.')' : 'Produk Dihapus';
                     })->implode(', ') ?: 'Custom Buket',
                 ];
             });
@@ -75,7 +75,7 @@ class AdminCustomerController extends Controller
 
         return Inertia::render('Admin/Customers/Index', [
             'customers' => $customers,
-            'filters' => $request->only('search')
+            'filters' => $request->only('search'),
         ]);
     }
 

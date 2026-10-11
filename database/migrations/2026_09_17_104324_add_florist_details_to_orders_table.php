@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('orders', function (Blueprint $table) {
             $table->date('delivery_date')->nullable()->after('notes');
             $table->string('delivery_time_slot')->nullable()->after('delivery_date');
-            
+
             $table->string('card_to')->nullable()->after('delivery_time_slot');
             $table->string('card_from')->nullable()->after('card_to');
             $table->text('card_message')->nullable()->after('card_from');
@@ -30,12 +30,12 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             $table->dropColumn([
-                'delivery_date', 
-                'delivery_time_slot', 
-                'card_to', 
-                'card_from', 
-                'card_message', 
-                'delivery_fee'
+                'delivery_date',
+                'delivery_time_slot',
+                'card_to',
+                'card_from',
+                'card_message',
+                'delivery_fee',
             ]);
         });
     }

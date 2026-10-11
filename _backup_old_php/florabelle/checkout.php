@@ -1,17 +1,24 @@
-<?php require_once 'config.php'; if(!isLoggedIn()) redirect('login.php');
+<?php require_once 'config.php';
+if (! isLoggedIn()) {
+    redirect('login.php');
+}
 
-$product_id = (int)($_GET['product_id'] ?? 0);
-if (!$product_id) redirect('home.php');
+$product_id = (int) ($_GET['product_id'] ?? 0);
+if (! $product_id) {
+    redirect('home.php');
+}
 
-$stmt = $db->prepare("SELECT * FROM products WHERE id = ?");
+$stmt = $db->prepare('SELECT * FROM products WHERE id = ?');
 $stmt->execute([$product_id]);
 $product = $stmt->fetch();
-if (!$product || $product['stock'] < 1) redirect('home.php');
+if (! $product || $product['stock'] < 1) {
+    redirect('home.php');
+}
 
 $ewallet_accounts = [
     'gopay' => '085712345678 (Gopay)',
-    'ovo'   => '087712345678 (OVO)',
-    'dana'  => '081234567890 (DANA)'
+    'ovo' => '087712345678 (OVO)',
+    'dana' => '081234567890 (DANA)',
 ];
 ?>
 <?php require_once 'header.php'; ?>

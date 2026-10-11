@@ -10,6 +10,16 @@ class Cart extends Model
         'user_id',
         'product_id',
         'quantity',
+        'custom_name',
+        'custom_request',
+        'custom_price',
+        'custom_image',
+        'custom_data',
+    ];
+
+    protected $casts = [
+        'custom_data' => 'array',
+        'custom_price' => 'float',
     ];
 
     public function user()

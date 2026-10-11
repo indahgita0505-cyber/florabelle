@@ -1,13 +1,13 @@
-<?php 
-require_once 'config.php'; 
+<?php
+require_once 'config.php';
 
 // Kalau sudah login, lempar ke beranda
-if(isLoggedIn()) {
+if (isLoggedIn()) {
     redirect('home.php');
 }
 
 // Ambil error (kalau ada)
- $error = isset($_SESSION['error']) ? $_SESSION['error'] : ''; 
+$error = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 unset($_SESSION['error']);
 ?>
 
@@ -24,11 +24,11 @@ unset($_SESSION['error']);
         <h2 class="text-center">Buat Akun Baru</h2>
         <p class="sub text-center">Daftar sebagai pembeli</p>
         
-        <?php if($error): ?>
+        <?php if ($error) { ?>
         <div class="alert alert-danger py-2" style="font-size:.86rem">
-            <i class="fas fa-exclamation-circle me-1"></i> <?=$error?>
+            <i class="fas fa-exclamation-circle me-1"></i> <?= $error?>
         </div>
-        <?php endif; ?>
+        <?php } ?>
         
         <form method="post" action="process.php">
             <input type="hidden" name="action" value="register">

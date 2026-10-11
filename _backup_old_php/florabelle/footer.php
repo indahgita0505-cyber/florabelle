@@ -9,7 +9,7 @@
         <div class="col-lg-3 col-6"><h5>Kategori</h5><div class="d-flex flex-column gap-2" style="font-size:.86rem"><a href="home.php?category=Bunga+Potong">Bunga Potong</a><a href="home.php?category=Buket">Buket</a><a href="home.php?category=Bunga+Pot">Bunga Pot</a></div></div>
         <div class="col-lg-3"><h5>Kontak</h5><div class="d-flex flex-column gap-2" style="font-size:.86rem"><span><i class="fas fa-phone me-2"></i>0812-3456-7890</span><span><i class="fas fa-envelope me-2"></i>halo@florabelle.com</span></div></div>
     </div>
-    <div class="ft-b">&copy; <?=date('Y')?> FloraBelle. Semua hak dilindungi.</div>
+    <div class="ft-b">&copy; <?= date('Y')?> FloraBelle. Semua hak dilindungi.</div>
 </div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

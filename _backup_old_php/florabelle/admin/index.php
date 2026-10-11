@@ -16,7 +16,7 @@ $stmt->execute([$firstDayMonth]);
 $monthStats = $stmt->fetch();
 
 // Total produk & total pesanan
-$totalProducts = $db->query("SELECT COUNT(*) FROM products")->fetchColumn();
+$totalProducts = $db->query('SELECT COUNT(*) FROM products')->fetchColumn();
 $totalOrders = $db->query("SELECT COUNT(*) FROM orders WHERE status != 'cancelled'")->fetchColumn();
 
 // ---------- DATA GRAFIK (7 Hari Terakhir) ----------
@@ -43,7 +43,9 @@ for ($i = 6; $i >= 0; $i--) {
             break;
         }
     }
-    if (!$found) $ordersCount[] = 0;
+    if (! $found) {
+        $ordersCount[] = 0;
+    }
 }
 // ---------- END GRAFIK ----------
 
@@ -57,43 +59,45 @@ $recentOrders = $db->query("
 ")->fetchAll();
 
 // Stok menipis (<=5)
-$lowStockProducts = $db->query("SELECT * FROM products WHERE stock <= 5 ORDER BY stock ASC LIMIT 5")->fetchAll();
+$lowStockProducts = $db->query('SELECT * FROM products WHERE stock <= 5 ORDER BY stock ASC LIMIT 5')->fetchAll();
 
 // Aktivitas (ulasan & inquiry)
 $activities = [];
 $tableReviews = $db->query("SHOW TABLES LIKE 'reviews'")->rowCount() > 0;
 if ($tableReviews) {
-    $reviews = $db->query("
+    $reviews = $db->query('
         SELECT r.*, u.username, p.name as product_name
         FROM reviews r
         JOIN users u ON r.user_id = u.id
         JOIN products p ON r.product_id = p.id
         ORDER BY r.id DESC LIMIT 5
-    ")->fetchAll();
+    ')->fetchAll();
     foreach ($reviews as $rv) {
         $activities[] = [
             'type' => 'review',
             'icon' => 'fa-star',
-            'title' => 'Ulasan dari ' . e($rv['username']),
-            'detail' => '⭐ ' . $rv['rating'] . '/5 - ' . substr(e($rv['review']), 0, 60),
-            'time' => $rv['created_at']
+            'title' => 'Ulasan dari '.e($rv['username']),
+            'detail' => '⭐ '.$rv['rating'].'/5 - '.substr(e($rv['review']), 0, 60),
+            'time' => $rv['created_at'],
         ];
     }
 }
 $tableInquiries = $db->query("SHOW TABLES LIKE 'inquiries'")->rowCount() > 0;
 if ($tableInquiries) {
-    $inquiries = $db->query("SELECT * FROM inquiries ORDER BY id DESC LIMIT 5")->fetchAll();
+    $inquiries = $db->query('SELECT * FROM inquiries ORDER BY id DESC LIMIT 5')->fetchAll();
     foreach ($inquiries as $inq) {
         $activities[] = [
             'type' => 'inquiry',
             'icon' => 'fa-question-circle',
-            'title' => 'Pertanyaan dari ' . e($inq['name']),
+            'title' => 'Pertanyaan dari '.e($inq['name']),
             'detail' => e($inq['subject']),
-            'time' => $inq['created_at']
+            'time' => $inq['created_at'],
         ];
     }
 }
-usort($activities, function($a, $b) { return strtotime($b['time']) - strtotime($a['time']); });
+usort($activities, function ($a, $b) {
+    return strtotime($b['time']) - strtotime($a['time']);
+});
 $activities = array_slice($activities, 0, 5);
 
 $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' => 'Dikirim', 'delivered' => 'Selesai', 'cancelled' => 'Dibatalkan'];
@@ -115,31 +119,31 @@ $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' 
         <div class="col-md-3 col-6">
             <div class="stat-card" style="background: white; border-radius: 24px; padding: 1.2rem; border: 1px solid #edf2f7;">
                 <div class="stat-icon" style="font-size: 2rem; color: var(--primary);"><i class="fas fa-box-open"></i></div>
-                <div class="stat-value fw-bold fs-2 mt-2"><?=$totalProducts?></div>
+                <div class="stat-value fw-bold fs-2 mt-2"><?= $totalProducts?></div>
                 <div class="stat-label text-muted small">Total Produk</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card" style="background: white; border-radius: 24px; padding: 1.2rem; border: 1px solid #edf2f7;">
                 <div class="stat-icon" style="font-size: 2rem; color: var(--primary);"><i class="fas fa-shopping-cart"></i></div>
-                <div class="stat-value fw-bold fs-2 mt-2"><?=$totalOrders?></div>
+                <div class="stat-value fw-bold fs-2 mt-2"><?= $totalOrders?></div>
                 <div class="stat-label text-muted small">Total Pesanan</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card" style="background: white; border-radius: 24px; padding: 1.2rem; border: 1px solid #edf2f7;">
                 <div class="stat-icon" style="font-size: 2rem; color: #f59e0b;"><i class="fas fa-calendar-day"></i></div>
-                <div class="stat-value fw-bold fs-2 mt-2"><?=rupiah($todayStats['revenue'])?></div>
+                <div class="stat-value fw-bold fs-2 mt-2"><?= rupiah($todayStats['revenue'])?></div>
                 <div class="stat-label text-muted small">Penjualan Hari Ini</div>
-                <div class="small text-muted"><?=$todayStats['orders']?> pesanan</div>
+                <div class="small text-muted"><?= $todayStats['orders']?> pesanan</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="stat-card" style="background: white; border-radius: 24px; padding: 1.2rem; border: 1px solid #edf2f7;">
                 <div class="stat-icon" style="font-size: 2rem; color: #10b981;"><i class="fas fa-calendar-alt"></i></div>
-                <div class="stat-value fw-bold fs-2 mt-2"><?=rupiah($monthStats['revenue'])?></div>
+                <div class="stat-value fw-bold fs-2 mt-2"><?= rupiah($monthStats['revenue'])?></div>
                 <div class="stat-label text-muted small">Penjualan Bulan Ini</div>
-                <div class="small text-muted"><?=$monthStats['orders']?> pesanan</div>
+                <div class="small text-muted"><?= $monthStats['orders']?> pesanan</div>
             </div>
         </div>
     </div>
@@ -163,28 +167,28 @@ $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' 
                     <a href="orders.php" class="btn btn-sm btn-outline-primary rounded-pill">Lihat Semua</a>
                 </div>
                 <div class="card-body p-0">
-                    <?php if(empty($recentOrders)): ?>
+                    <?php if (empty($recentOrders)) { ?>
                         <div class="p-5 text-center text-muted">Belum ada pesanan</div>
-                    <?php else: ?>
+                    <?php } else { ?>
                         <div class="table-responsive">
                             <table class="table table-hover mb-0" style="font-size: 0.85rem;">
                                 <thead class="bg-light">
                                     <tr><th>No. Pesanan</th><th>Pelanggan</th><th>Total</th><th>Status</th><th>Tanggal</th></tr>
                                 </thead>
                                 <tbody>
-                                <?php foreach($recentOrders as $o): ?>
+                                <?php foreach ($recentOrders as $o) { ?>
                                     <tr>
-                                        <td><strong>#FLB-<?=str_pad($o['id'],5,'0',STR_PAD_LEFT)?></strong></td>
-                                        <td><?=e($o['customer_name'] ?: $o['username'])?></td>
-                                        <td><?=rupiah($o['total'])?></td>
-                                        <td><span class="badge <?= $o['status']=='pending'?'bg-warning':($o['status']=='confirmed'?'bg-info':($o['status']=='shipped'?'bg-primary':'bg-success')) ?>"><?=$statusMap[$o['status']]?></span></td>
-                                        <td class="text-muted"><?=date('d/m H:i', strtotime($o['created_at']))?></td>
+                                        <td><strong>#FLB-<?= str_pad($o['id'], 5, '0', STR_PAD_LEFT)?></strong></td>
+                                        <td><?= e($o['customer_name'] ?: $o['username'])?></td>
+                                        <td><?= rupiah($o['total'])?></td>
+                                        <td><span class="badge <?= $o['status'] == 'pending' ? 'bg-warning' : ($o['status'] == 'confirmed' ? 'bg-info' : ($o['status'] == 'shipped' ? 'bg-primary' : 'bg-success')) ?>"><?= $statusMap[$o['status']]?></span></td>
+                                        <td class="text-muted"><?= date('d/m H:i', strtotime($o['created_at']))?></td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php } ?>
                                 </tbody>
                             </table>
                         </div>
-                    <?php endif; ?>
+                    <?php } ?>
                 </div>
             </div>
         </div>
@@ -194,18 +198,18 @@ $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' 
                     <h5 class="mb-0 fw-semibold"><i class="fas fa-exclamation-triangle me-2 text-warning"></i> Stok Menipis (≤5)</h5>
                 </div>
                 <div class="card-body">
-                    <?php if(empty($lowStockProducts)): ?>
+                    <?php if (empty($lowStockProducts)) { ?>
                         <div class="text-center py-4 text-muted"><i class="fas fa-check-circle text-success me-1"></i> Semua stok aman</div>
-                    <?php else: ?>
-                        <?php foreach($lowStockProducts as $p): ?>
+                    <?php } else { ?>
+                        <?php foreach ($lowStockProducts as $p) { ?>
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <div><strong><?=e($p['name'])?></strong> <span class="text-danger">(Stok: <?=$p['stock']?>)</span></div>
-                                <a href="product_form.php?id=<?=$p['id']?>" class="btn btn-sm btn-outline-secondary rounded-pill">Edit</a>
+                                <div><strong><?= e($p['name'])?></strong> <span class="text-danger">(Stok: <?= $p['stock']?>)</span></div>
+                                <a href="product_form.php?id=<?= $p['id']?>" class="btn btn-sm btn-outline-secondary rounded-pill">Edit</a>
                             </div>
-                            <div class="progress mb-3" style="height: 6px;"><div class="progress-bar bg-danger" style="width: <?=min(100, ($p['stock']/10)*100)?>%"></div></div>
-                        <?php endforeach; ?>
+                            <div class="progress mb-3" style="height: 6px;"><div class="progress-bar bg-danger" style="width: <?= min(100, ($p['stock'] / 10) * 100)?>%"></div></div>
+                        <?php } ?>
                         <div class="text-end"><a href="products.php" class="small">Kelola semua →</a></div>
-                    <?php endif; ?>
+                    <?php } ?>
                 </div>
             </div>
         </div>
@@ -217,24 +221,24 @@ $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' 
             <h5 class="mb-0 fw-semibold"><i class="fas fa-history me-2 text-primary"></i> Aktivitas Terakhir</h5>
         </div>
         <div class="card-body">
-            <?php if(empty($activities)): ?>
+            <?php if (empty($activities)) { ?>
                 <div class="text-center py-4 text-muted">Belum ada ulasan atau pertanyaan</div>
-            <?php else: ?>
+            <?php } else { ?>
                 <div class="list-group list-group-flush">
-                <?php foreach($activities as $act): ?>
+                <?php foreach ($activities as $act) { ?>
                     <div class="list-group-item px-0">
                         <div class="d-flex">
-                            <div class="me-3"><i class="fas <?=$act['icon']?> text-primary fa-fw"></i></div>
+                            <div class="me-3"><i class="fas <?= $act['icon']?> text-primary fa-fw"></i></div>
                             <div>
-                                <div class="fw-semibold"><?=$act['title']?></div>
-                                <div class="small text-muted"><?=$act['detail']?></div>
-                                <small class="text-muted"><i class="far fa-clock me-1"></i><?=date('d M Y H:i', strtotime($act['time']))?></small>
+                                <div class="fw-semibold"><?= $act['title']?></div>
+                                <div class="small text-muted"><?= $act['detail']?></div>
+                                <small class="text-muted"><i class="far fa-clock me-1"></i><?= date('d M Y H:i', strtotime($act['time']))?></small>
                             </div>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
                 </div>
-            <?php endif; ?>
+            <?php } ?>
         </div>
     </div>
 </div>
@@ -243,7 +247,9 @@ $statusMap = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('ordersChart').getContext('2d');
-    const dates = <?= json_encode(array_map(function($d) { return date('d/m', strtotime($d)); }, $dates)) ?>;
+    const dates = <?= json_encode(array_map(function ($d) {
+        return date('d/m', strtotime($d));
+    }, $dates)) ?>;
     const orders = <?= json_encode($ordersCount) ?>;
     
     new Chart(ctx, {

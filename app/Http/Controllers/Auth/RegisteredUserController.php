@@ -9,9 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,7 +41,7 @@ class RegisteredUserController extends Controller
 
         $user = User::create([
             'name' => $request->name,
-            'username' => $request->username ?? Str::slug($request->name) . '_' . Str::random(4),
+            'username' => $request->username ?? Str::slug($request->name).'_'.Str::random(4),
             'email' => $request->email,
             'whatsapp_number' => $request->whatsapp_number ?? '-',
             'password' => Hash::make($request->password),

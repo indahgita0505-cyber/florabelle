@@ -1,578 +1,351 @@
-import { Head, Link, usePage, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import UserDashboardLayout from '@/Layouts/UserDashboardLayout';
 
-/* ─────────────────── helpers ─────────────────── */
-const fmt = (n) => 'Rp ' + Number(n).toLocaleString('id-ID');
+const formatRupiah = (n) => 'Rp' + Number(n || 0).toLocaleString('id-ID');
 const ONGKIR = 15000;
 
-/* ─────────────────── EMPTY STATE ─────────────────── */
-function EmptyCart() {
-    return (
-        <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-            <div className="w-28 h-28 rounded-full flex items-center justify-center text-6xl mb-6"
-                style={{ background: 'linear-gradient(135deg, #fce7f3, #eff6ff)' }}>
-                
-            </div>
-            <h2 className="text-xl font-extrabold text-slate-700 mb-2">
-                Keranjangmu masih kosong
-            </h2>
-            <p className="text-sm text-slate-400 max-w-xs mb-8">
-                Yuk, temukan buket impianmu dan buat momen spesialmu semakin berkesan bersama Florabelle.id Palu!
-            </p>
-            <Link
-                href={route('dashboard')}
-                className="inline-flex items-center gap-2 text-white font-bold px-7 py-3.5 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
-                style={{ background: 'linear-gradient(135deg, #f472b6, #e879a0)', boxShadow: '0 8px 25px rgba(244,114,182,0.35)' }}
-            >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                </svg>
-                Mulai Belanja Sekarang
-            </Link>
-        </div>
-    );
-}
-
-/* ─────────────────── STAR ROW ─────────────────── */
-function Stars({ rating = 4.8 }) {
-    return (
-        <span className="inline-flex items-center gap-0.5">
-            {[...Array(5)].map((_, i) => (
-                <svg key={i} className="w-3 h-3" viewBox="0 0 20 20"
-                    fill={i < Math.floor(rating) ? '#fbbf24' : '#e2e8f0'}>
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-            ))}
-            <span className="text-[10px] text-slate-400 ml-0.5 font-medium">{rating}</span>
-        </span>
-    );
-}
-
-/* ─────────────────── MAIN PAGE ─────────────────── */
-export default function Index({ carts = [], recommendations = [] }) {
+export default function CartIndex({ carts = [], recommendations = [] }) {
     const { flash } = usePage().props;
+    const [editingItem, setEditingItem] = useState(null);
+    const [editedRequestText, setEditedRequestText] = useState('');
+    const [deletingId, setDeletingId] = useState(null);
 
-    const [selectedItems, setSelectedItems] = useState(carts.map((c) => c.id));
-    const [cardMessages, setCardMessages]   = useState({});
-    const [voucherCode, setVoucherCode]     = useState('');
-    const [discount, setDiscount]           = useState(0);
-    const [voucherMsg, setVoucherMsg]       = useState(null);
-    const [removingId, setRemovingId]       = useState(null);
+    // Hitung total belanja
+    const subtotal = carts.reduce((sum, item) => {
+        const itemPrice = item.custom_price ?? (item.product ? item.product.price : 150000);
+        return sum + (itemPrice * item.quantity);
+    }, 0);
 
-    /* selection helpers */
-    const allSelected = selectedItems.length === carts.length && carts.length > 0;
-    const toggleItem  = (id) => setSelectedItems((p) => p.includes(id) ? p.filter((x) => x !== id) : [...p, id]);
-    const toggleAll   = ()   => setSelectedItems(allSelected ? [] : carts.map((c) => c.id));
+    const totalItemsCount = carts.reduce((sum, item) => sum + item.quantity, 0);
+    const totalPembayaran = carts.length > 0 ? subtotal + ONGKIR : 0;
 
-    /* backend: update qty */
-    const updateQty = (cartId, current, delta) => {
-        const next = current + delta;
-        if (next < 1) return;
-        router.put(route('cart.update', cartId), { quantity: next }, { preserveScroll: true });
+    // Update quantity
+    const handleUpdateQty = (cartId, currentQty, delta) => {
+        const newQty = currentQty + delta;
+        if (newQty < 1) return;
+        router.put(route('cart.update', cartId), { quantity: newQty }, {
+            preserveScroll: true,
+        });
     };
 
-    /* backend: remove */
-    const removeItem = (cartId) => {
-        setRemovingId(cartId);
+    // Delete item
+    const handleDeleteItem = (cartId) => {
+        if (!confirm('Hapus bucket ini dari keranjang?')) return;
+        setDeletingId(cartId);
         router.delete(route('cart.destroy', cartId), {
             preserveScroll: true,
-            onFinish: () => setRemovingId(null),
+            onFinish: () => setDeletingId(null),
         });
     };
 
-    /* voucher */
-    const applyVoucher = () => {
-        const code = voucherCode.trim().toUpperCase();
-        if (code === 'FLORA10') {
-            setDiscount(0.1);
-            setVoucherMsg({ ok: true, text: ' Voucher FLORA10 aktif! Diskon 10% berhasil diterapkan.' });
-        } else if (code === '') {
-            setVoucherMsg({ ok: false, text: ' Masukkan kode voucher terlebih dahulu.' });
-        } else {
-            setDiscount(0);
-            setVoucherMsg({ ok: false, text: ' Kode voucher tidak valid atau sudah kedaluwarsa.' });
-        }
+    // Open edit request modal
+    const handleOpenEdit = (item) => {
+        setEditingItem(item);
+        setEditedRequestText(item.custom_request || '');
     };
 
-    /* checkout form */
-    const { data, setData, post, processing, errors } = useForm({
-        cart_ids: [],
-        payment_method: 'transfer',
-        customer_name: '',
-        customer_phone: '',
-        customer_address: '',
-        notes: '',
-    });
-
-    const submitOrder = (e) => {
+    // Save edited request
+    const handleSaveRequest = (e) => {
         e.preventDefault();
-        if (selectedItems.length === 0) {
-            alert('Pilih minimal satu item untuk dilanjutkan ke checkout.');
-            return;
-        }
-        post(route('orders.store'), {
-            onBefore: () => setData('cart_ids', selectedItems),
+        if (!editingItem) return;
+        router.put(route('cart.update', editingItem.id), {
+            custom_request: editedRequestText,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setEditingItem(null),
         });
     };
 
-    /* totals */
-    const selectedCarts = carts.filter((c) => selectedItems.includes(c.id));
-    const subtotal      = selectedCarts.reduce((s, c) => s + ((c.product?.price ?? 0) * c.quantity), 0);
-    const discountAmt   = Math.round(subtotal * discount);
-    const ongkir        = selectedCarts.length > 0 ? ONGKIR : 0;
-    const total         = subtotal - discountAmt + ongkir;
-
-    /* customization chips (placeholder for demo) */
-    const customDetails = [
-        'Warna Kertas: Soft Pink',
-        'Pita: Putih Cream',
-        'Ukuran: Medium (12 tangkai)',
-    ];
+    // Reset dummy data
+    const handleResetDummy = () => {
+        router.post(route('cart.reset-dummy'), {}, {
+            preserveScroll: true,
+        });
+    };
 
     return (
-        <div className="min-h-screen bg-[#f8f9fc]" style={{ fontFamily: "'Inter','Segoe UI',sans-serif" }}>
-            <Head title="Keranjang Belanja — Florabelle.id" />
+        <UserDashboardLayout activeNav="cart">
+            <Head title="Keranjang Belanja — BungaKita" />
 
-            {/* ── TOP NAV ── */}
-            <header className="sticky top-0 z-20 bg-white/90 backdrop-blur-md border-b border-slate-100 px-5 lg:px-10 py-4 flex items-center gap-4 shadow-sm">
-                <Link
-                    href={route('dashboard')}
-                    className="flex items-center gap-1.5 text-slate-400 hover:text-pink-400 transition text-sm font-semibold"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
-                    <span className="hidden sm:inline">Kembali Belanja</span>
-                </Link>
-
-                <div className="flex items-center gap-2.5 mx-auto">
-                    <div className="w-8 h-8 rounded-xl bg-pink-50 flex items-center justify-center text-lg"></div>
-                    <h1 className="text-base font-extrabold text-slate-700">Keranjang Belanja</h1>
-                    {usePage().props.cartCount > 0 && (
-                        <span className="bg-pink-400 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full leading-tight">
-                            {usePage().props.cartCount}
-                        </span>
-                    )}
-                </div>
-
-                <Link href="/" className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                    <span className="text-xl"></span>
-                    <span className="hidden sm:block text-sm font-extrabold text-pink-400">Florabelle.id</span>
-                </Link>
-            </header>
-
-            {/* ── FLASH MESSAGES ── */}
-            {(flash?.success || flash?.error) && (
-                <div className="max-w-6xl mx-auto px-5 lg:px-8 pt-5">
-                    <div className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium border ${
-                        flash?.success ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'
-                    }`}>
-                        <span>{flash?.success ? '' : ''}</span>
-                        {flash?.success ?? flash?.error}
+            {/* Flash Message */}
+            {flash?.success && (
+                <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-2xl flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span>✓</span>
+                        <span>{flash.success}</span>
                     </div>
                 </div>
             )}
 
-            {/* ── MAIN ── */}
-            <main className="max-w-6xl mx-auto px-4 lg:px-8 py-6 lg:py-8">
+            {/* Header Screen 1 */}
+            <div className="flex items-center gap-3.5 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100/80 text-[#d84062] flex items-center justify-center shadow-xs">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 className="text-xl sm:text-2xl font-bold font-serif text-slate-800 tracking-tight">
+                        Keranjang Belanja
+                    </h1>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                        Berikut adalah pesanan bucket yang telah kamu pilih.
+                    </p>
+                </div>
+            </div>
 
-                {/* BIG WHITE CARD */}
-                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            {carts.length === 0 ? (
+                /* Empty Cart State */
+                <div className="bg-white rounded-3xl p-10 sm:p-14 border border-rose-100/80 text-center shadow-xs max-w-2xl mx-auto my-6">
+                    <div className="w-20 h-20 rounded-full bg-rose-50 text-[#d84062] flex items-center justify-center mx-auto mb-4 text-3xl">
+                        🛒
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">
+                        Keranjang kamu masih kosong.
+                    </h3>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto mb-6">
+                        Belum ada bucket yang dipilih. Yuk jelajahi kreasi bucket impianmu sekarang!
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <Link
+                            href={route('custom.index')}
+                            className="px-6 py-2.5 rounded-full bg-[#d84062] hover:bg-[#be2f50] text-white text-xs font-bold shadow-md shadow-rose-200 transition active:scale-95"
+                        >
+                            Mulai Belanja
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={handleResetDummy}
+                            className="px-5 py-2.5 rounded-full bg-rose-50 hover:bg-rose-100 text-[#d84062] text-xs font-semibold border border-rose-200 transition active:scale-95 cursor-pointer"
+                        >
+                            Muat Data Contoh Mockup
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                /* Active Cart Screen */
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    {/* Left Column: Daftar Pesanan */}
+                    <div className="lg:col-span-2 space-y-4">
+                        {carts.map((item) => {
+                            const name = item.custom_name ?? (item.product ? item.product.name : 'Bucket Bunga');
+                            const image = item.custom_image ?? (item.product?.image_url || '/images/custom/bunga_pita.jpg');
+                            const price = item.custom_price ?? (item.product ? item.product.price : 150000);
+                            const requestSummary = item.custom_request || 'Sesuai pesanan custom';
 
-                    {carts.length === 0 ? (
-                        <EmptyCart />
-                    ) : (
-                        <div className="flex flex-col lg:flex-row min-h-[600px]">
-
-                            {/* ════════════════════════════════════════════════
-                                KOLOM KIRI — DAFTAR PRODUK (65%)
-                            ════════════════════════════════════════════════ */}
-                            <div className="flex-1 min-w-0 border-b lg:border-b-0 lg:border-r border-slate-100">
-
-                                {/* Select all bar */}
-                                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
-                                    <label className="flex items-center gap-3 cursor-pointer select-none group">
-                                        <div
-                                            onClick={toggleAll}
-                                            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
-                                                allSelected ? 'bg-pink-400 border-pink-400' : 'border-blue-200 bg-white group-hover:border-pink-300'
-                                            }`}
-                                        >
-                                            {allSelected && (
-                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="bg-white rounded-3xl p-4 sm:p-5 border border-rose-100/80 shadow-xs hover:border-rose-200 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                                        {/* Foto Bucket */}
+                                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden bg-rose-50 flex-shrink-0 border border-rose-100/70">
+                                            <img
+                                                src={image}
+                                                alt={name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = '/images/custom/bunga_pita.jpg';
+                                                }}
+                                            />
                                         </div>
-                                        <span className="text-sm font-semibold text-slate-600">
-                                            Pilih Semua
-                                        </span>
-                                    </label>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs text-slate-400">
-                                            {selectedItems.length} / {carts.length} item dipilih
-                                        </span>
-                                        {selectedItems.length > 0 && (
-                                            <span className="text-xs font-bold text-pink-400 bg-pink-50 px-2.5 py-1 rounded-full">
-                                                 Siap checkout
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
 
-                                {/* Items list */}
-                                <div className="divide-y divide-slate-100">
-                                    {carts.map((item, idx) => {
-                                        const isSelected = selectedItems.includes(item.id);
-                                        const isRemoving = removingId === item.id;
-
-                                        return (
-                                            <div
-                                                key={item.id}
-                                                className={`transition-all duration-300 ${isRemoving ? 'opacity-40 scale-98' : 'opacity-100'} ${isSelected ? 'bg-pink-50/30' : 'bg-white'}`}
-                                            >
-                                                {/* ── Item row ── */}
-                                                <div className="px-6 py-5 flex gap-4">
-
-                                                    {/* Checkbox */}
-                                                    <div className="flex-shrink-0 pt-1">
-                                                        <div
-                                                            onClick={() => toggleItem(item.id)}
-                                                            className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition cursor-pointer ${
-                                                                isSelected ? 'bg-pink-400 border-pink-400 shadow-sm shadow-pink-200' : 'border-blue-200 bg-white hover:border-pink-300'
-                                                            }`}
-                                                        >
-                                                            {isSelected && (
-                                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                                                </svg>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Product image */}
-                                                    <div className="w-20 h-20 lg:w-[88px] lg:h-[88px] rounded-2xl overflow-hidden flex-shrink-0 border-2 border-pink-100 bg-pink-50 shadow-sm">
-                                                        {item.product.image_url ? (
-                                                            <img
-                                                                src={item.product.image_url}
-                                                                alt={item.product.name}
-                                                                className="w-full h-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-4xl">
-                                                                {item.product.image || ''}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-start justify-between gap-3">
-                                                            <div className="min-w-0 flex-1">
-                                                                {/* Badge + Name */}
-                                                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                                    <span className="text-[10px] font-bold bg-pink-100 text-pink-500 px-2 py-0.5 rounded-full">
-                                                                        {item.product.category || 'Bunga Segar'}
-                                                                    </span>
-                                                                    <Stars rating={4.8} />
-                                                                </div>
-                                                                <h3 className="text-[14px] lg:text-base font-bold text-slate-700 leading-snug truncate">
-                                                                    {item.product.name}
-                                                                </h3>
-
-                                                                {/* Customization chips */}
-                                                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                    {customDetails.map((d) => (
-                                                                        <span key={d}
-                                                                            className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full font-medium"
-                                                                        >
-                                                                            {d}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Delete button */}
-                                                            <button
-                                                                onClick={() => removeItem(item.id)}
-                                                                disabled={isRemoving}
-                                                                className="flex-shrink-0 w-8 h-8 rounded-xl bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500 flex items-center justify-center transition disabled:opacity-50"
-                                                                title="Hapus dari keranjang"
-                                                            >
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round"
-                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                                </svg>
-                                                            </button>
-                                                        </div>
-
-                                                        {/* Price + Qty row */}
-                                                        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-                                                            <div>
-                                                                <p className="text-[10px] text-slate-400 font-medium">Harga Satuan</p>
-                                                                <p className="text-base font-extrabold text-pink-400">
-                                                                    {fmt(item.product?.price ?? 0)}
-                                                                </p>
-                                                            </div>
-
-                                                            {/* Qty stepper */}
-                                                            <div className="flex items-center gap-0 rounded-2xl border-2 border-blue-200 overflow-hidden bg-white shadow-sm">
-                                                                <button
-                                                                    onClick={() => updateQty(item.id, item.quantity, -1)}
-                                                                    className="w-9 h-9 flex items-center justify-center font-bold text-blue-400 hover:bg-blue-50 transition text-lg leading-none"
-                                                                    disabled={item.quantity <= 1}
-                                                                >
-                                                                    −
-                                                                </button>
-                                                                <span className="w-10 text-center text-sm font-extrabold text-slate-700 select-none">
-                                                                    {item.quantity}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => updateQty(item.id, item.quantity, 1)}
-                                                                    className="w-9 h-9 flex items-center justify-center font-bold text-blue-400 hover:bg-blue-50 transition text-lg leading-none"
-                                                                >
-                                                                    +
-                                                                </button>
-                                                            </div>
-
-                                                            <div className="text-right">
-                                                                <p className="text-[10px] text-slate-400 font-medium">Subtotal</p>
-                                                                <p className="text-sm font-extrabold text-slate-700">
-                                                                    {fmt((item.product?.price ?? 0) * item.quantity)}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* ── Card message textarea ── */}
-                                                <div className="px-6 pb-5 pl-[calc(1.5rem+20px+1rem+88px+1rem)]">
-                                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round"
-                                                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                                        </svg>
-                                                        <label className="text-[11px] font-semibold text-slate-400">
-                                                            Catatan Ucapan di Kartu <span className="font-normal">(Opsional)</span>
-                                                        </label>
-                                                    </div>
-                                                    <textarea
-                                                        rows={2}
-                                                        value={cardMessages[item.id] || ''}
-                                                        onChange={(e) =>
-                                                            setCardMessages((prev) => ({ ...prev, [item.id]: e.target.value }))
-                                                        }
-                                                        placeholder={`Contoh: "Selamat ulang tahun, semoga selalu bahagia! Dengan cinta "`}
-                                                        className="w-full text-xs px-4 py-2.5 rounded-xl border-2 border-blue-100 bg-blue-50/30 text-slate-600 placeholder-slate-300 focus:outline-none focus:border-pink-300 focus:ring-2 focus:ring-pink-100 transition resize-none"
-                                                    />
-                                                </div>
+                                        {/* Detail Bucket */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                <h3 className="font-bold text-slate-800 text-sm sm:text-base leading-snug">
+                                                    {name}
+                                                </h3>
+                                                <span className="px-2 py-0.5 rounded-full bg-rose-50 text-[#d84062] border border-rose-200/60 text-[10px] font-semibold">
+                                                    Custom Request
+                                                </span>
                                             </div>
-                                        );
-                                    })}
-                                </div>
 
-                                {/* Add more CTA */}
-                                <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/40">
-                                    <Link
-                                        href={route('dashboard')}
-                                        className="inline-flex items-center gap-2 text-sm font-semibold text-blue-400 hover:text-pink-400 transition"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        Tambah produk lainnya
-                                    </Link>
-                                </div>
-                            </div>
+                                            {/* Ringkasan Request */}
+                                            <p className="text-xs text-slate-500 italic leading-relaxed line-clamp-2">
+                                                «{requestSummary}»
+                                            </p>
 
-                            {/* ════════════════════════════════════════════════
-                                REKOMENDASI APRIORI (Jika ada)
-                            ════════════════════════════════════════════════ */}
-                            {recommendations && recommendations.length > 0 && (
-                                <div className="px-6 py-6 border-t border-slate-100 bg-gradient-to-br from-pink-50/50 to-white">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center text-pink-500">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
-                                        </div>
-                                        <h3 className="text-base font-extrabold text-slate-700">Sering Dibeli Bersamaan</h3>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {recommendations.map(prod => (
-                                            <div key={prod.id} className="bg-white p-3 rounded-2xl border border-pink-100 shadow-sm flex items-center gap-4 hover:shadow-md transition">
-                                                <div className="w-16 h-16 rounded-xl bg-pink-50 overflow-hidden border border-pink-50 shrink-0">
-                                                    {prod.image_url ? (
-                                                        <img src={prod.image_url} alt={prod.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-2xl">{prod.image || ''}</div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-bold text-slate-700 truncate">{prod.name}</h4>
-                                                    <p className="text-xs font-bold text-pink-500">{fmt(prod.price)}</p>
-                                                </div>
+                                            {/* Tombol Edit Request */}
+                                            <div className="mt-2 flex items-center gap-3">
                                                 <button
-                                                    onClick={() => router.post(route('cart.store'), { product_id: prod.id, quantity: 1 }, { preserveScroll: true })}
-                                                    className="w-8 h-8 rounded-full bg-pink-50 text-pink-500 hover:bg-pink-500 hover:text-white flex items-center justify-center shrink-0 transition"
-                                                    title="Tambah ke Keranjang"
+                                                    type="button"
+                                                    onClick={() => handleOpenEdit(item)}
+                                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#d84062] hover:text-[#be2f50] hover:underline cursor-pointer"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                                     </svg>
+                                                    Edit Request
                                                 </button>
                                             </div>
-                                        ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Kolom Harga & Qty & Hapus */}
+                                    <div className="flex items-center sm:flex-col sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-slate-400 block sm:hidden">Harga:</span>
+                                            <span className="font-extrabold text-[#d84062] text-sm sm:text-base">
+                                                {formatRupiah(price)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 mt-2 sm:mt-3">
+                                            {/* Quantity Pill */}
+                                            <div className="flex items-center border border-rose-200 rounded-full bg-[#fffbfa] px-1 py-0.5 shadow-2xs">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleUpdateQty(item.id, item.quantity, -1)}
+                                                    disabled={item.quantity <= 1}
+                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-rose-100 disabled:opacity-30 cursor-pointer"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-7 text-center text-xs font-bold text-slate-700">
+                                                    {item.quantity}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleUpdateQty(item.id, item.quantity, 1)}
+                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-rose-100 cursor-pointer"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+
+                                            {/* Tombol Hapus */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteItem(item.id)}
+                                                disabled={deletingId === item.id}
+                                                className="w-8 h-8 rounded-full flex items-center justify-center text-rose-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 transition cursor-pointer"
+                                                title="Hapus dari keranjang"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            )}
+                            );
+                        })}
 
-                            {/* ════════════════════════════════════════════════
-                                KOLOM KANAN — RINGKASAN PEMBAYARAN (35%)
-                            ════════════════════════════════════════════════ */}
-                            <div className="w-full lg:w-[360px] xl:w-[380px] flex-shrink-0 bg-[#f7fbff]">
-                                <div className="px-6 py-6 h-full flex flex-col gap-5">
+                        {/* Link Lanjut Belanja di Bawah List */}
+                        <div className="pt-2 flex items-center justify-between">
+                            <Link
+                                href={route('custom.index')}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#d84062] hover:text-[#be2f50] hover:underline"
+                            >
+                                <span>←</span>
+                                <span>Lanjut Belanja</span>
+                            </Link>
 
-                                    {/* Header */}
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-8 h-8 rounded-xl bg-blue-100 flex items-center justify-center text-base"></div>
-                                        <div>
-                                            <h2 className="text-sm font-extrabold text-slate-700">Ringkasan Pembayaran</h2>
-                                            <p className="text-[10px] text-slate-400">{selectedItems.length} item dipilih</p>
-                                        </div>
-                                    </div>
+                            <button
+                                type="button"
+                                onClick={handleResetDummy}
+                                className="text-[11px] text-slate-400 hover:text-slate-600 underline cursor-pointer"
+                            >
+                                Muat Ulang Contoh Mockup
+                            </button>
+                        </div>
+                    </div>
 
-                                    {/* Price breakdown */}
-                                    <div className="bg-white rounded-2xl border border-blue-100/80 p-4 space-y-3">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-slate-500">Total Harga Bunga</span>
-                                            <span className="font-semibold text-slate-700">{fmt(subtotal)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-slate-500 flex items-center gap-1.5">
-                                                <span className="text-base"></span>
-                                                Estimasi Ongkir
-                                                <span className="text-[10px] text-slate-400">(Grab Palu)</span>
-                                            </span>
-                                            <span className="font-semibold text-slate-700">
-                                                {ongkir > 0 ? fmt(ongkir) : '—'}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-green-500 flex items-center gap-1.5">
-                                                <span className="text-base"></span>
-                                                Potongan Diskon Voucher
-                                            </span>
-                                            <span className="font-semibold text-green-500">
-                                                {discountAmt > 0 ? `− ${fmt(discountAmt)}` : 'Rp 0'}
-                                            </span>
-                                        </div>
+                    {/* Right Column: Ringkasan Belanja */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-white rounded-3xl p-6 border border-rose-100/90 shadow-sm sticky top-24">
+                            <h2 className="font-bold text-slate-800 text-base mb-4 font-serif">
+                                Ringkasan Belanja
+                            </h2>
 
-                                        <div className="border-t border-dashed border-blue-100 pt-3 flex items-center justify-between">
-                                            <span className="text-sm font-extrabold text-slate-700">Total Akhir</span>
-                                            <span className="text-xl font-extrabold text-pink-400">{fmt(total)}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Voucher input */}
-                                    <div>
-                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                            Kode Voucher / Promo
-                                        </p>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={voucherCode}
-                                                onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-                                                onKeyDown={(e) => e.key === 'Enter' && applyVoucher()}
-                                                placeholder="Ketik kode promo..."
-                                                className="flex-1 px-4 py-2.5 rounded-xl border-2 border-blue-200 bg-white text-sm text-slate-700 placeholder-slate-300 font-mono tracking-widest focus:outline-none focus:border-pink-300 focus:ring-2 focus:ring-pink-100 transition"
-                                            />
-                                            <button
-                                                onClick={applyVoucher}
-                                                className="px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-blue-400 hover:bg-blue-500 transition shadow-sm active:scale-95 flex-shrink-0"
-                                            >
-                                                Pakai
-                                            </button>
-                                        </div>
-                                        {voucherMsg && (
-                                            <p className={`mt-2 text-xs font-medium ${voucherMsg.ok ? 'text-green-500' : 'text-red-400'}`}>
-                                                {voucherMsg.text}
-                                            </p>
-                                        )}
-                                        <p className="mt-1.5 text-[10px] text-slate-400">
-                                            Coba kode: <span className="font-bold text-pink-400 tracking-widest cursor-pointer hover:underline"
-                                                onClick={() => setVoucherCode('FLORA10')}>FLORA10</span> untuk diskon 10%
-                                        </p>
-                                    </div>
-
-                                    {/* Delivery info */}
-                                    <div className="bg-blue-50 rounded-2xl p-3.5 flex gap-3 items-start border border-blue-100">
-                                        <span className="text-xl flex-shrink-0 mt-0.5"></span>
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-700">Grab Delivery · Ojek Online Palu</p>
-                                            <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
-                                                Pengiriman ekspres ke seluruh Kota Palu. Estimasi tiba <span className="font-bold text-blue-500">30–60 menit</span> setelah pesanan dikonfirmasi.
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Spacer */}
-                                    <div className="flex-1" />
-
-                                    {/* ── CTA BUTTON ── */}
-                                    <div className="space-y-3 border-t border-blue-100 pt-5">
-                                        {selectedItems.length > 0 ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    sessionStorage.setItem('cartCheckoutData', JSON.stringify({
-                                                        isCart: true,
-                                                        cartIds: selectedItems,
-                                                        budget: total,
-                                                        itemsText: selectedCarts.map(c => `${c.product.name} (x${c.quantity})`).join(', ')
-                                                    }));
-                                                    sessionStorage.removeItem('customBouquetData');
-                                                    router.get('/checkout');
-                                                }}
-                                                className="w-full py-4 rounded-2xl text-white font-extrabold text-[15px] tracking-wide flex items-center justify-center gap-2.5 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
-                                                style={{
-                                                    background: 'linear-gradient(135deg, #f472b6 0%, #e879a0 100%)',
-                                                    boxShadow: '0 10px 30px rgba(244,114,182,0.40)',
-                                                }}
-                                            >
-                                                Lanjutkan ke Pembayaran &gt;
-                                            </button>
-                                        ) : (
-                                            <button
-                                                type="button"
-                                                disabled
-                                                className="w-full py-4 rounded-2xl bg-slate-200 text-slate-400 font-bold text-sm cursor-not-allowed"
-                                            >
-                                                Pilih item untuk melanjutkan
-                                            </button>
-                                        )}
-
-                                        <p className="text-center text-[10px] text-slate-400 flex items-center justify-center gap-1">
-                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round"
-                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                            </svg>
-                                            Transaksi aman & terenkripsi · Florabelle.id Palu
-                                        </p>
-                                    </div>
+                            <div className="space-y-3 text-xs">
+                                <div className="flex items-center justify-between text-slate-600">
+                                    <span>Total Harga ({totalItemsCount} barang)</span>
+                                    <span className="font-semibold text-slate-800">{formatRupiah(subtotal)}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-slate-600">
+                                    <span>Ongkos Kirim</span>
+                                    <span className="font-semibold text-slate-800">{formatRupiah(ONGKIR)}</span>
                                 </div>
                             </div>
 
-                        </div>
-                    )}
-                </div>
-            </main>
+                            <div className="border-t border-rose-100/70 my-4"></div>
 
-            {/* ── FOOTER ── */}
-            <footer className="text-center text-xs text-slate-300 py-8">
-                © 2026 Florabelle.id Palu · Jl. Dayodara – Jl. Meteorologi Blok B2 ·  Dibuat dengan cinta
-            </footer>
-        </div>
+                            <div className="flex items-center justify-between mb-5">
+                                <span className="font-bold text-slate-800 text-sm">Total Pembayaran</span>
+                                <span className="font-extrabold text-[#d84062] text-xl">
+                                    {formatRupiah(totalPembayaran)}
+                                </span>
+                            </div>
+
+                            {/* Tombol Checkout Sekarang */}
+                            <Link
+                                href={route('checkout.index')}
+                                className="w-full py-3.5 px-4 rounded-2xl bg-[#d84062] hover:bg-[#be2f50] text-white text-xs sm:text-sm font-bold shadow-md shadow-rose-200 transition active:scale-98 flex items-center justify-center gap-2 block text-center"
+                            >
+                                <span>Checkout Sekarang</span>
+                                <span>→</span>
+                            </Link>
+
+                            {/* Estimasi Pengiriman Badge */}
+                            <div className="mt-4 p-3 rounded-2xl bg-rose-50/50 border border-rose-100/70 flex items-center gap-2.5 text-[11px] text-slate-500">
+                                <span className="text-base flex-shrink-0">🚚</span>
+                                <span>Estimasi pengiriman 2 - 4 hari (Tergantung lokasi)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Edit Request */}
+            {editingItem && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-100 animate-in zoom-in-95">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-slate-800 text-sm">
+                                Edit Request Bucket
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setEditingItem(null)}
+                                className="text-slate-400 hover:text-slate-600 text-sm p-1"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-500 mb-3">
+                            Ubah catatan request untuk <strong>{editingItem.custom_name || editingItem.product?.name}</strong>:
+                        </p>
+                        <form onSubmit={handleSaveRequest}>
+                            <textarea
+                                value={editedRequestText}
+                                onChange={(e) => setEditedRequestText(e.target.value)}
+                                rows={4}
+                                className="w-full text-xs p-3 border border-rose-200 rounded-2xl focus:ring-2 focus:ring-rose-200 focus:outline-none mb-4 text-slate-700"
+                                placeholder="Tuliskan warna bunga, kertas pembungkus, pita, atau ucapan khusus..."
+                            ></textarea>
+                            <div className="flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingItem(null)}
+                                    className="px-4 py-2 rounded-xl text-xs text-slate-500 hover:bg-slate-100 font-semibold"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-xl text-xs text-white bg-[#d84062] hover:bg-[#be2f50] font-bold shadow-xs"
+                                >
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </UserDashboardLayout>
     );
 }

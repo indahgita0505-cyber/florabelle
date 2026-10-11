@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
@@ -20,7 +21,7 @@ class ProductController extends Controller
 
         // Pencarian
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         // Sorting harga
@@ -33,18 +34,18 @@ class ProductController extends Controller
         }
 
         $products = $query->get();
-        
+
         // Dapatkan semua produk untuk perhitungan count kategori
         $allProductsCount = Product::count();
-        $categoriesFromDb = \App\Models\Category::withCount('products')->get();
+        $categoriesFromDb = Category::withCount('products')->get();
 
         return view('products', [
-            'products'         => $products,
+            'products' => $products,
             'allProductsCount' => $allProductsCount,
             'categoriesFromDb' => $categoriesFromDb,
-            'activeCategory'   => $request->category ?? 'all',
-            'searchQuery'      => $request->search ?? '',
-            'activeSort'       => $request->sort ?? 'newest',
+            'activeCategory' => $request->category ?? 'all',
+            'searchQuery' => $request->search ?? '',
+            'activeSort' => $request->sort ?? 'newest',
         ]);
     }
 

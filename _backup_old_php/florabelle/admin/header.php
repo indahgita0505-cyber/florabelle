@@ -1,4 +1,6 @@
-<?php if(!isAdmin()) redirect('../home.php'); ?>
+<?php if (! isAdmin()) {
+    redirect('../home.php');
+} ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -12,7 +14,7 @@
 <script src="../script.js"></script>
 </head>
 <body>
-<div class="toast-c"><?php if($toast): ?><div class="toast-m <?=$toast['type']?>"><i class="fas fa-<?= $toast['type']==='success'?'check-circle':'exclamation-triangle' ?>"></i> <?=e($toast['msg'])?></div><?php endif; ?></div>
+<div class="toast-c"><?php if ($toast) { ?><div class="toast-m <?= $toast['type']?>"><i class="fas fa-<?= $toast['type'] === 'success' ? 'check-circle' : 'exclamation-triangle' ?>"></i> <?= e($toast['msg'])?></div><?php } ?></div>
 
 <div class="admin-wrapper" style="display: flex;">
     <aside class="admin-sidebar">
@@ -20,11 +22,11 @@
             <a href="index.php"><i class="fas fa-seedling"></i> Flora<span>Belle</span></a>
         </div>
         <div class="sidebar-label">Menu Utama</div>
-        <a href="index.php" class="sidebar-link <?=basename($_SERVER['PHP_SELF'])==='index.php'?'active':''?>"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a>
-        <a href="products.php" class="sidebar-link <?=in_array(basename($_SERVER['PHP_SELF']), ['products.php','product_form.php'])?'active':''?>"><i class="fas fa-box-open"></i> <span>Kelola Produk</span></a>
-        <a href="orders.php" class="sidebar-link <?=basename($_SERVER['PHP_SELF'])==='orders.php'?'active':''?>"><i class="fas fa-file-invoice-dollar"></i> <span>Pesanan Masuk</span></a>
-        <a href="customers_promos.php" class="sidebar-link <?=basename($_SERVER['PHP_SELF'])==='customers_promos.php'?'active':''?>"><i class="fas fa-users"></i> <span>Pelanggan & Promo</span></a>
-        <a href="reports_stock.php" class="sidebar-link <?=basename($_SERVER['PHP_SELF'])==='reports_stock.php'?'active':''?>"><i class="fas fa-chart-line"></i> <span>Laporan & Stok</span></a>
+        <a href="index.php" class="sidebar-link <?= basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : ''?>"><i class="fas fa-chart-pie"></i> <span>Dashboard</span></a>
+        <a href="products.php" class="sidebar-link <?= in_array(basename($_SERVER['PHP_SELF']), ['products.php', 'product_form.php']) ? 'active' : ''?>"><i class="fas fa-box-open"></i> <span>Kelola Produk</span></a>
+        <a href="orders.php" class="sidebar-link <?= basename($_SERVER['PHP_SELF']) === 'orders.php' ? 'active' : ''?>"><i class="fas fa-file-invoice-dollar"></i> <span>Pesanan Masuk</span></a>
+        <a href="customers_promos.php" class="sidebar-link <?= basename($_SERVER['PHP_SELF']) === 'customers_promos.php' ? 'active' : ''?>"><i class="fas fa-users"></i> <span>Pelanggan & Promo</span></a>
+        <a href="reports_stock.php" class="sidebar-link <?= basename($_SERVER['PHP_SELF']) === 'reports_stock.php' ? 'active' : ''?>"><i class="fas fa-chart-line"></i> <span>Laporan & Stok</span></a>
         <a href="../home.php" class="sidebar-link"><i class="fas fa-eye"></i> <span>Pratinjau Toko</span></a>
         
         <div class="sidebar-bottom">

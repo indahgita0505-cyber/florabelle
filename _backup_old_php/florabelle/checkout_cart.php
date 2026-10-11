@@ -1,7 +1,10 @@
-<?php require_once 'config.php'; if(!isLoggedIn()) redirect('login.php');
+<?php require_once 'config.php';
+if (! isLoggedIn()) {
+    redirect('login.php');
+}
 
-if(!isset($_POST['selected']) || empty($_POST['selected'])) {
-    toast("Tidak ada item dipilih.", 'warning');
+if (! isset($_POST['selected']) || empty($_POST['selected'])) {
+    toast('Tidak ada item dipilih.', 'warning');
     redirect('cart.php');
 }
 $selected_cart_ids = $_POST['selected'];
@@ -11,15 +14,19 @@ $stmt = $db->prepare("SELECT c.id as cart_id, c.quantity, p.* FROM cart c JOIN p
 $params = array_merge($selected_cart_ids, [$_SESSION['user_id']]);
 $stmt->execute($params);
 $items = $stmt->fetchAll();
-if(empty($items)) redirect('cart.php');
+if (empty($items)) {
+    redirect('cart.php');
+}
 
 $total = 0;
-foreach($items as $i) $total += $i['price'] * $i['quantity'];
+foreach ($items as $i) {
+    $total += $i['price'] * $i['quantity'];
+}
 
 $ewallet_accounts = [
     'gopay' => '085712345678 (Gopay)',
-    'ovo'   => '087712345678 (OVO)',
-    'dana'  => '081234567890 (DANA)'
+    'ovo' => '087712345678 (OVO)',
+    'dana' => '081234567890 (DANA)',
 ];
 ?>
 <?php require_once 'header.php'; ?>
@@ -32,10 +39,10 @@ $ewallet_accounts = [
         <div class="card mb-3">
             <div class="card-body">
                 <h5>Ringkasan Pesanan</h5>
-                <?php foreach($items as $i): ?>
-                <div class="d-flex justify-content-between"><?=e($i['name'])?> x<?=$i['quantity']?> <?=rupiah($i['price'] * $i['quantity'])?></div>
-                <?php endforeach; ?>
-                <hr><div class="fw-bold">Total: <?=rupiah($total)?></div>
+                <?php foreach ($items as $i) { ?>
+                <div class="d-flex justify-content-between"><?= e($i['name'])?> x<?= $i['quantity']?> <?= rupiah($i['price'] * $i['quantity'])?></div>
+                <?php } ?>
+                <hr><div class="fw-bold">Total: <?= rupiah($total)?></div>
             </div>
         </div>
         <form method="post" action="process.php">

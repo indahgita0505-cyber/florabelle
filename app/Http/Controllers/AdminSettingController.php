@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\StoreSetting;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class AdminSettingController extends Controller
 {
@@ -15,7 +15,7 @@ class AdminSettingController extends Controller
         $settings = StoreSetting::pluck('value', 'key')->toArray();
 
         return Inertia::render('Admin/Settings/Index', [
-            'settings' => $settings
+            'settings' => $settings,
         ]);
     }
 
@@ -41,7 +41,7 @@ class AdminSettingController extends Controller
         // Proses upload QRIS
         if ($request->hasFile('qris_image')) {
             $path = $request->file('qris_image')->store('settings', 'public');
-            
+
             // Hapus QRIS lama jika ada
             $oldQris = StoreSetting::where('key', 'qris_image')->first();
             if ($oldQris && $oldQris->value) {

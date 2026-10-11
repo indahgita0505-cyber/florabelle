@@ -2,9 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Product;
+use App\Models\BouquetOption;
+use App\Models\Category;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\DeliveryArea;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -34,7 +37,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Delivery Areas
-        \App\Models\DeliveryArea::insert([
+        DeliveryArea::insert([
             ['name' => 'Palu Barat', 'fee' => 15000, 'is_active' => true],
             ['name' => 'Palu Timur', 'fee' => 15000, 'is_active' => true],
             ['name' => 'Palu Selatan', 'fee' => 20000, 'is_active' => true],
@@ -44,9 +47,9 @@ class DatabaseSeeder extends Seeder
 
         // Categories
         $categories = [
-            'fresh' => \App\Models\Category::create(['name' => 'Bunga Segar (Fresh)', 'slug' => 'fresh']),
-            'dried' => \App\Models\Category::create(['name' => 'Bunga Kering (Dried)', 'slug' => 'dried']),
-            'artificial' => \App\Models\Category::create(['name' => 'Bunga Tiruan (Artificial)', 'slug' => 'artificial']),
+            'fresh' => Category::create(['name' => 'Bunga Segar (Fresh)', 'slug' => 'fresh']),
+            'dried' => Category::create(['name' => 'Bunga Kering (Dried)', 'slug' => 'dried']),
+            'artificial' => Category::create(['name' => 'Bunga Tiruan (Artificial)', 'slug' => 'artificial']),
         ];
 
         // Custom Bouquet Options
@@ -73,7 +76,7 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($bouquetOptions as $opt) {
-            \App\Models\BouquetOption::create($opt);
+            BouquetOption::create($opt);
         }
 
         // Products
@@ -112,7 +115,7 @@ class DatabaseSeeder extends Seeder
                 'price' => 320000,
                 'category_id' => $categories['artificial']->id,
                 'stock' => 10,
-            ]
+            ],
         ];
 
         foreach ($products as $p) {

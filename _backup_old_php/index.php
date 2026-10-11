@@ -2,16 +2,16 @@
 session_start();
 
 // === KONFIGURASI DATABASE (SQLite) ===
- $db_file = __DIR__ . '/flowershop.db';
+$db_file = __DIR__.'/flowershop.db';
 try {
-    $db = new PDO('sqlite:' . $db_file);
+    $db = new PDO('sqlite:'.$db_file);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (Exception $e) {
-    die("<h2>Error: Ekstensi SQLite tidak aktif. Aktifkan di php.ini.</h2><p>" . $e->getMessage() . "</p>");
+    exit('<h2>Error: Ekstensi SQLite tidak aktif. Aktifkan di php.ini.</h2><p>'.$e->getMessage().'</p>');
 }
 
 // Buat tabel
- $db->exec("CREATE TABLE IF NOT EXISTS users (
+$db->exec("CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
@@ -19,7 +19,7 @@ try {
     role TEXT DEFAULT 'customer',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
- $db->exec("CREATE TABLE IF NOT EXISTS products (
+$db->exec("CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
@@ -29,15 +29,15 @@ try {
     stock INTEGER DEFAULT 50,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
- $db->exec("CREATE TABLE IF NOT EXISTS cart (
+$db->exec('CREATE TABLE IF NOT EXISTS cart (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     product_id INTEGER,
     quantity INTEGER DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (product_id) REFERENCES products(id)
-)");
- $db->exec("CREATE TABLE IF NOT EXISTS orders (
+)');
+$db->exec("CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     total REAL,
@@ -50,7 +50,7 @@ try {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 )");
- $db->exec("CREATE TABLE IF NOT EXISTS order_items (
+$db->exec('CREATE TABLE IF NOT EXISTS order_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id INTEGER,
     product_id INTEGER,
@@ -58,159 +58,227 @@ try {
     price REAL,
     quantity INTEGER,
     FOREIGN KEY (order_id) REFERENCES orders(id)
-)");
+)');
 
 // Seed produk jika kosong
-if ($db->query("SELECT COUNT(*) FROM products")->fetchColumn() == 0) {
-    $seeds = array(
-        array('Mawar Merah Premium','Mawar merah segar kualitas premium, simbol cinta sejati. Cocok untuk hadiah romantis dan anniversary.',45000,'🌹','Bunga Potong',100),
-        array('Buket Lily Putih Elegan','Buket lily putih anggun dengan baby breath. Simbol kemurnian dan keanggunan abadi.',85000,'🤍','Buket',30),
-        array('Bunga Matahari Ceria','Bunga matahari segar penuh energi positif. Ideal untuk mencerahkan hari seseorang.',25000,'🌻','Bunga Potong',80),
-        array('Tulip Ungu Eksklusif','Tulip ungu langka dan mewah. Representasi kerajaan dan keanggunan tak terbatas.',65000,'🌷','Bunga Potong',40),
-        array('Buket Mix Romantis','Kombinasi mawar merah, pink, dan baby breath. Buket sempurna untuk momen spesial.',135000,'💐','Buket',25),
-        array('Anggrek Bulan Putih','Anggrek bulan putih memesona, bunga nasional Indonesia. Tahan lama dan elegan.',150000,'🦋','Bunga Pot',15),
-        array('Krisan Kuning Segar','Krisan kuning cerah penuh makna persahabatan. Bisa tahan hingga 2 minggu.',18000,'🌼','Bunga Potong',120),
-        array('Buket Pengantin Mewah','Buket eksklusif dengan mawar putih, lily, dan dedaunan hijau. Untuk hari terindah.',280000,'👰','Buket',10),
-        array('Sakura Mini dalam Pot','Sakura mini Jepang dalam pot keramik cantik. Membawa suasana musim semi.',175000,'🌸','Bunga Pot',8),
-        array('Baby Breath Lembut','Baby breath putih lembut, pelengkap sempurna untuk setiap buket dan rangkaian.',12000,'🫧','Bunga Potong',200),
-        array('Dahlia Merah Besar','Dahlia merah besar mencolok, pusat perhatian setiap ruangan dan acara.',70000,'🌺','Bunga Potong',35),
-        array('Buket Ulang Tahun Spesial','Buket pesta dengan bunga warna-warni dan balon mini. Kejutan sempurna!',95000,'🎂','Buket',20),
-        array('Peony Pink Resort','Bunga peony pink mewah dengan aroma lembut. Favorit para penggemar bunga.',110000,'🩷','Bunga Potong',22),
-        array('Rangkaian Meja Makan','Rangkaian bunga segar untuk hiasan meja makan. Segar dan natural setiap hari.',55000,'🪴','Rangkaian',18),
-        array('Bunga Kaktus Mini Set','Koleksi 3 kaktus mini dalam pot cantik. Perawatan mudah, tampilan Instagramable.',88000,'🌵','Bunga Pot',45),
-    );
-    $stmt = $db->prepare("INSERT INTO products (name,description,price,image,category,stock) VALUES (?,?,?,?,?,?)");
-    foreach ($seeds as $s) { $stmt->execute($s); }
+if ($db->query('SELECT COUNT(*) FROM products')->fetchColumn() == 0) {
+    $seeds = [
+        ['Mawar Merah Premium', 'Mawar merah segar kualitas premium, simbol cinta sejati. Cocok untuk hadiah romantis dan anniversary.', 45000, '🌹', 'Bunga Potong', 100],
+        ['Buket Lily Putih Elegan', 'Buket lily putih anggun dengan baby breath. Simbol kemurnian dan keanggunan abadi.', 85000, '🤍', 'Buket', 30],
+        ['Bunga Matahari Ceria', 'Bunga matahari segar penuh energi positif. Ideal untuk mencerahkan hari seseorang.', 25000, '🌻', 'Bunga Potong', 80],
+        ['Tulip Ungu Eksklusif', 'Tulip ungu langka dan mewah. Representasi kerajaan dan keanggunan tak terbatas.', 65000, '🌷', 'Bunga Potong', 40],
+        ['Buket Mix Romantis', 'Kombinasi mawar merah, pink, dan baby breath. Buket sempurna untuk momen spesial.', 135000, '💐', 'Buket', 25],
+        ['Anggrek Bulan Putih', 'Anggrek bulan putih memesona, bunga nasional Indonesia. Tahan lama dan elegan.', 150000, '🦋', 'Bunga Pot', 15],
+        ['Krisan Kuning Segar', 'Krisan kuning cerah penuh makna persahabatan. Bisa tahan hingga 2 minggu.', 18000, '🌼', 'Bunga Potong', 120],
+        ['Buket Pengantin Mewah', 'Buket eksklusif dengan mawar putih, lily, dan dedaunan hijau. Untuk hari terindah.', 280000, '👰', 'Buket', 10],
+        ['Sakura Mini dalam Pot', 'Sakura mini Jepang dalam pot keramik cantik. Membawa suasana musim semi.', 175000, '🌸', 'Bunga Pot', 8],
+        ['Baby Breath Lembut', 'Baby breath putih lembut, pelengkap sempurna untuk setiap buket dan rangkaian.', 12000, '🫧', 'Bunga Potong', 200],
+        ['Dahlia Merah Besar', 'Dahlia merah besar mencolok, pusat perhatian setiap ruangan dan acara.', 70000, '🌺', 'Bunga Potong', 35],
+        ['Buket Ulang Tahun Spesial', 'Buket pesta dengan bunga warna-warni dan balon mini. Kejutan sempurna!', 95000, '🎂', 'Buket', 20],
+        ['Peony Pink Resort', 'Bunga peony pink mewah dengan aroma lembut. Favorit para penggemar bunga.', 110000, '🩷', 'Bunga Potong', 22],
+        ['Rangkaian Meja Makan', 'Rangkaian bunga segar untuk hiasan meja makan. Segar dan natural setiap hari.', 55000, '🪴', 'Rangkaian', 18],
+        ['Bunga Kaktus Mini Set', 'Koleksi 3 kaktus mini dalam pot cantik. Perawatan mudah, tampilan Instagramable.', 88000, '🌵', 'Bunga Pot', 45],
+    ];
+    $stmt = $db->prepare('INSERT INTO products (name,description,price,image,category,stock) VALUES (?,?,?,?,?,?)');
+    foreach ($seeds as $s) {
+        $stmt->execute($s);
+    }
 }
 
 // Seed admin
 if ($db->query("SELECT COUNT(*) FROM users WHERE role='admin'")->fetchColumn() == 0) {
-    $db->exec("INSERT INTO users (username,email,password,role) VALUES ('admin','admin@florabelle.com','" . password_hash('admin123', PASSWORD_DEFAULT) . "','admin')");
+    $db->exec("INSERT INTO users (username,email,password,role) VALUES ('admin','admin@florabelle.com','".password_hash('admin123', PASSWORD_DEFAULT)."','admin')");
 }
 
 // === HELPER FUNCTIONS ===
-function isLoggedIn() { return isset($_SESSION['user_id']); }
-function isAdmin() { return isset($_SESSION['role']) && $_SESSION['role'] === 'admin'; }
-function redirect($page) { header("Location: ?page=" . $page); exit; }
-function rupiah($n) { return 'Rp ' . number_format($n, 0, ',', '.'); }
-function e($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
-function toast($msg, $type='success') { $_SESSION['toast'] = array('msg'=>$msg,'type'=>$type); }
-function getToast() { if(isset($_SESSION['toast'])){ $t=$_SESSION['toast']; unset($_SESSION['toast']); return $t; } return null; }
+function isLoggedIn()
+{
+    return isset($_SESSION['user_id']);
+}
+function isAdmin()
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+}
+function redirect($page)
+{
+    header('Location: ?page='.$page);
+    exit;
+}
+function rupiah($n)
+{
+    return 'Rp '.number_format($n, 0, ',', '.');
+}
+function e($s)
+{
+    return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+}
+function toast($msg, $type = 'success')
+{
+    $_SESSION['toast'] = ['msg' => $msg, 'type' => $type];
+}
+function getToast()
+{
+    if (isset($_SESSION['toast'])) {
+        $t = $_SESSION['toast'];
+        unset($_SESSION['toast']);
 
-function cardGradient($cat) {
-    $map = array(
+        return $t;
+    }
+
+    return null;
+}
+
+function cardGradient($cat)
+{
+    $map = [
         'Bunga Potong' => 'linear-gradient(135deg,#fce4ec,#f8bbd0)',
         'Buket' => 'linear-gradient(135deg,#fff3e0,#ffe0b2)',
         'Bunga Pot' => 'linear-gradient(135deg,#e8f5e9,#c8e6c9)',
         'Rangkaian' => 'linear-gradient(135deg,#e0f7fa,#b2ebf2)',
-    );
+    ];
+
     return isset($map[$cat]) ? $map[$cat] : 'linear-gradient(135deg,#f3e5f5,#e1bee7)';
 }
 
 // === HANDLE ACTIONS ===
- $action = isset($_POST['action']) ? $_POST['action'] : (isset($_GET['action']) ? $_GET['action'] : '');
- $page = isset($_GET['page']) ? $_GET['page'] : 'home';
- $search = isset($_GET['search']) ? $_GET['search'] : '';
- $cat_filter = isset($_GET['category']) ? $_GET['category'] : '';
+$action = isset($_POST['action']) ? $_POST['action'] : (isset($_GET['action']) ? $_GET['action'] : '');
+$page = isset($_GET['page']) ? $_GET['page'] : 'home';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+$cat_filter = isset($_GET['category']) ? $_GET['category'] : '';
 
 if ($action === 'login') {
-    $stmt = $db->prepare("SELECT * FROM users WHERE email=?");
-    $stmt->execute(array($_POST['email'] ?? ''));
+    $stmt = $db->prepare('SELECT * FROM users WHERE email=?');
+    $stmt->execute([$_POST['email'] ?? '']);
     $u = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($u && password_verify($_POST['password'] ?? '', $u['password'])) {
-        $_SESSION['user_id']=$u['id']; $_SESSION['username']=$u['username']; $_SESSION['role']=$u['role'];
-        toast("Selamat datang, " . $u['username'] . "!");
+        $_SESSION['user_id'] = $u['id'];
+        $_SESSION['username'] = $u['username'];
+        $_SESSION['role'] = $u['role'];
+        toast('Selamat datang, '.$u['username'].'!');
         redirect('home');
-    } else { $error = "Email atau password salah!"; }
+    } else {
+        $error = 'Email atau password salah!';
+    }
 }
 
 if ($action === 'register') {
-    $pw = $_POST['password'] ?? ''; $pw2 = $_POST['confirm_password'] ?? '';
-    if ($pw !== $pw2) { $error = "Password tidak cocok!"; }
-    else {
-        $stmt = $db->prepare("SELECT id FROM users WHERE email=? OR username=?");
-        $stmt->execute(array($_POST['email'], $_POST['username']));
-        if ($stmt->fetch()) { $error = "Email atau username sudah terdaftar!"; }
-        else {
-            $db->prepare("INSERT INTO users (username,email,password) VALUES (?,?,?)")
-               ->execute(array($_POST['username'], $_POST['email'], password_hash($pw, PASSWORD_DEFAULT)));
-            toast("Registrasi berhasil! Silakan login.");
+    $pw = $_POST['password'] ?? '';
+    $pw2 = $_POST['confirm_password'] ?? '';
+    if ($pw !== $pw2) {
+        $error = 'Password tidak cocok!';
+    } else {
+        $stmt = $db->prepare('SELECT id FROM users WHERE email=? OR username=?');
+        $stmt->execute([$_POST['email'], $_POST['username']]);
+        if ($stmt->fetch()) {
+            $error = 'Email atau username sudah terdaftar!';
+        } else {
+            $db->prepare('INSERT INTO users (username,email,password) VALUES (?,?,?)')
+                ->execute([$_POST['username'], $_POST['email'], password_hash($pw, PASSWORD_DEFAULT)]);
+            toast('Registrasi berhasil! Silakan login.');
             redirect('login');
         }
     }
 }
 
-if ($action === 'logout') { session_destroy(); redirect('home'); }
+if ($action === 'logout') {
+    session_destroy();
+    redirect('home');
+}
 
 if ($action === 'add_to_cart') {
-    if (!isLoggedIn()) { toast("Silakan login terlebih dahulu.",'warning'); redirect('login'); }
-    $pid = (int)($_POST['product_id'] ?? 0); $qty = (int)($_POST['quantity'] ?? 1);
-    $stmt = $db->prepare("SELECT id,quantity FROM cart WHERE user_id=? AND product_id=?");
-    $stmt->execute(array($_SESSION['user_id'],$pid)); $ex = $stmt->fetch();
-    if ($ex) { $db->prepare("UPDATE cart SET quantity=quantity+? WHERE id=?")->execute(array($qty,$ex['id'])); }
-    else { $db->prepare("INSERT INTO cart (user_id,product_id,quantity) VALUES (?,?,?)")->execute(array($_SESSION['user_id'],$pid,$qty)); }
-    toast("Produk ditambahkan ke keranjang!");
-    $ref = $_POST['redirect'] ?? 'home'; redirect($ref);
+    if (! isLoggedIn()) {
+        toast('Silakan login terlebih dahulu.', 'warning');
+        redirect('login');
+    }
+    $pid = (int) ($_POST['product_id'] ?? 0);
+    $qty = (int) ($_POST['quantity'] ?? 1);
+    $stmt = $db->prepare('SELECT id,quantity FROM cart WHERE user_id=? AND product_id=?');
+    $stmt->execute([$_SESSION['user_id'], $pid]);
+    $ex = $stmt->fetch();
+    if ($ex) {
+        $db->prepare('UPDATE cart SET quantity=quantity+? WHERE id=?')->execute([$qty, $ex['id']]);
+    } else {
+        $db->prepare('INSERT INTO cart (user_id,product_id,quantity) VALUES (?,?,?)')->execute([$_SESSION['user_id'], $pid, $qty]);
+    }
+    toast('Produk ditambahkan ke keranjang!');
+    $ref = $_POST['redirect'] ?? 'home';
+    redirect($ref);
 }
 
 if ($action === 'update_cart') {
-    foreach ($_POST['quantity'] ?? array() as $cid => $qty) {
-        if ($qty <= 0) $db->prepare("DELETE FROM cart WHERE id=? AND user_id=?")->execute(array($cid,$_SESSION['user_id']));
-        else $db->prepare("UPDATE cart SET quantity=? WHERE id=? AND user_id=?")->execute(array($qty,$cid,$_SESSION['user_id']));
+    foreach ($_POST['quantity'] ?? [] as $cid => $qty) {
+        if ($qty <= 0) {
+            $db->prepare('DELETE FROM cart WHERE id=? AND user_id=?')->execute([$cid, $_SESSION['user_id']]);
+        } else {
+            $db->prepare('UPDATE cart SET quantity=? WHERE id=? AND user_id=?')->execute([$qty, $cid, $_SESSION['user_id']]);
+        }
     }
     redirect('cart');
 }
 
 if ($action === 'remove_cart') {
-    $db->prepare("DELETE FROM cart WHERE id=? AND user_id=?")->execute(array($_GET['id']??0,$_SESSION['user_id']));
+    $db->prepare('DELETE FROM cart WHERE id=? AND user_id=?')->execute([$_GET['id'] ?? 0, $_SESSION['user_id']]);
     redirect('cart');
 }
 
 if ($action === 'checkout') {
-    if (!isLoggedIn()) redirect('login');
-    $stmt = $db->prepare("SELECT c.*,p.name,p.price,p.stock FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=?");
-    $stmt->execute(array($_SESSION['user_id'])); $items = $stmt->fetchAll();
-    if (empty($items)) { toast("Keranjang kosong!",'warning'); redirect('cart'); }
-    $total = 0;
-    foreach ($items as $i) { $total += $i['price'] * $i['quantity']; }
-    $db->prepare("INSERT INTO orders (user_id,total,payment_method,customer_name,customer_phone,customer_address,notes) VALUES (?,?,?,?,?,?,?)")
-       ->execute(array($_SESSION['user_id'],$total,$_POST['payment_method'],$_POST['customer_name'],$_POST['customer_phone'],$_POST['customer_address'],$_POST['notes'] ?? ''));
-    $oid = $db->lastInsertId();
-    $stmt2 = $db->prepare("INSERT INTO order_items (order_id,product_id,product_name,price,quantity) VALUES (?,?,?,?,?)");
-    foreach ($items as $i) {
-        $stmt2->execute(array($oid,$i['product_id'],$i['name'],$i['price'],$i['quantity']));
-        $db->prepare("UPDATE products SET stock=stock-? WHERE id=?")->execute(array($i['quantity'],$i['product_id']));
+    if (! isLoggedIn()) {
+        redirect('login');
     }
-    $db->prepare("DELETE FROM cart WHERE user_id=?")->execute(array($_SESSION['user_id']));
+    $stmt = $db->prepare('SELECT c.*,p.name,p.price,p.stock FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=?');
+    $stmt->execute([$_SESSION['user_id']]);
+    $items = $stmt->fetchAll();
+    if (empty($items)) {
+        toast('Keranjang kosong!', 'warning');
+        redirect('cart');
+    }
+    $total = 0;
+    foreach ($items as $i) {
+        $total += $i['price'] * $i['quantity'];
+    }
+    $db->prepare('INSERT INTO orders (user_id,total,payment_method,customer_name,customer_phone,customer_address,notes) VALUES (?,?,?,?,?,?,?)')
+        ->execute([$_SESSION['user_id'], $total, $_POST['payment_method'], $_POST['customer_name'], $_POST['customer_phone'], $_POST['customer_address'], $_POST['notes'] ?? '']);
+    $oid = $db->lastInsertId();
+    $stmt2 = $db->prepare('INSERT INTO order_items (order_id,product_id,product_name,price,quantity) VALUES (?,?,?,?,?)');
+    foreach ($items as $i) {
+        $stmt2->execute([$oid, $i['product_id'], $i['name'], $i['price'], $i['quantity']]);
+        $db->prepare('UPDATE products SET stock=stock-? WHERE id=?')->execute([$i['quantity'], $i['product_id']]);
+    }
+    $db->prepare('DELETE FROM cart WHERE user_id=?')->execute([$_SESSION['user_id']]);
     redirect('order_success&oid='.$oid);
 }
 
 if ($action === 'add_product' && isAdmin()) {
-    $db->prepare("INSERT INTO products (name,description,price,image,category,stock) VALUES (?,?,?,?,?,?)")
-       ->execute(array($_POST['name'],$_POST['description'],$_POST['price'],$_POST['image'],$_POST['category'],$_POST['stock']));
-    toast("Produk berhasil ditambahkan!"); redirect('admin_products');
+    $db->prepare('INSERT INTO products (name,description,price,image,category,stock) VALUES (?,?,?,?,?,?)')
+        ->execute([$_POST['name'], $_POST['description'], $_POST['price'], $_POST['image'], $_POST['category'], $_POST['stock']]);
+    toast('Produk berhasil ditambahkan!');
+    redirect('admin_products');
 }
 if ($action === 'edit_product' && isAdmin()) {
-    $db->prepare("UPDATE products SET name=?,description=?,price=?,image=?,category=?,stock=? WHERE id=?")
-       ->execute(array($_POST['name'],$_POST['description'],$_POST['price'],$_POST['image'],$_POST['category'],$_POST['stock'],$_POST['id']));
-    toast("Produk berhasil diperbarui!"); redirect('admin_products');
+    $db->prepare('UPDATE products SET name=?,description=?,price=?,image=?,category=?,stock=? WHERE id=?')
+        ->execute([$_POST['name'], $_POST['description'], $_POST['price'], $_POST['image'], $_POST['category'], $_POST['stock'], $_POST['id']]);
+    toast('Produk berhasil diperbarui!');
+    redirect('admin_products');
 }
 if ($action === 'delete_product' && isAdmin()) {
-    $db->prepare("DELETE FROM products WHERE id=?")->execute(array($_GET['id']??0));
-    toast("Produk berhasil dihapus!"); redirect('admin_products');
+    $db->prepare('DELETE FROM products WHERE id=?')->execute([$_GET['id'] ?? 0]);
+    toast('Produk berhasil dihapus!');
+    redirect('admin_products');
 }
 if ($action === 'update_order_status' && isAdmin()) {
-    $db->prepare("UPDATE orders SET status=? WHERE id=?")->execute(array($_POST['status'],$_POST['order_id']));
-    toast("Status pesanan diperbarui!"); redirect('admin_orders');
+    $db->prepare('UPDATE orders SET status=? WHERE id=?')->execute([$_POST['status'], $_POST['order_id']]);
+    toast('Status pesanan diperbarui!');
+    redirect('admin_orders');
 }
 
 // Hitung keranjang
- $cart_count = 0;
+$cart_count = 0;
 if (isLoggedIn()) {
-    $c = $db->prepare("SELECT SUM(quantity) FROM cart WHERE user_id=?");
-    $c->execute(array($_SESSION['user_id'])); $cart_count = $c->fetchColumn() ?: 0;
+    $c = $db->prepare('SELECT SUM(quantity) FROM cart WHERE user_id=?');
+    $c->execute([$_SESSION['user_id']]);
+    $cart_count = $c->fetchColumn() ?: 0;
 }
- $toast = getToast();
+$toast = getToast();
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -373,12 +441,12 @@ a{text-decoration:none;color:inherit;transition:all .25s}
 
 <!-- TOAST -->
 <div class="toast-container" id="toastContainer">
-<?php if($toast): ?>
+<?php if ($toast) { ?>
     <div class="toast-msg <?php echo $toast['type']; ?>">
-        <i class="fas fa-<?php echo $toast['type']==='success'?'check-circle':($toast['type']==='warning'?'exclamation-triangle':'times-circle'); ?>"></i>
+        <i class="fas fa-<?php echo $toast['type'] === 'success' ? 'check-circle' : ($toast['type'] === 'warning' ? 'exclamation-triangle' : 'times-circle'); ?>"></i>
         <?php echo e($toast['msg']); ?>
     </div>
-<?php endif; ?>
+<?php } ?>
 </div>
 
 <!-- NAVBAR -->
@@ -387,34 +455,34 @@ a{text-decoration:none;color:inherit;transition:all .25s}
     <div class="d-flex align-items-center justify-content-between">
         <a href="?page=home" class="nav-brand"><i class="fas fa-seedling"></i> Flora<span>Belle</span></a>
         <div class="d-flex align-items-center gap-1 gap-md-2 d-none d-md-flex">
-            <a href="?page=home" class="nav-link-custom <?php echo $page==='home'?'active':''; ?>">Beranda</a>
+            <a href="?page=home" class="nav-link-custom <?php echo $page === 'home' ? 'active' : ''; ?>">Beranda</a>
             <a href="?page=home#products" class="nav-link-custom">Katalog</a>
-            <?php if(isAdmin()): ?>
-            <a href="?page=admin_products" class="nav-link-custom <?php echo strpos($page,'admin')===0?'active':''; ?>">Admin</a>
-            <?php endif; ?>
-            <?php if(isLoggedIn()): ?>
-            <a href="?page=orders" class="nav-link-custom <?php echo $page==='orders'?'active':''; ?>">Pesanan</a>
-            <?php endif; ?>
+            <?php if (isAdmin()) { ?>
+            <a href="?page=admin_products" class="nav-link-custom <?php echo strpos($page, 'admin') === 0 ? 'active' : ''; ?>">Admin</a>
+            <?php } ?>
+            <?php if (isLoggedIn()) { ?>
+            <a href="?page=orders" class="nav-link-custom <?php echo $page === 'orders' ? 'active' : ''; ?>">Pesanan</a>
+            <?php } ?>
         </div>
         <div class="d-flex align-items-center gap-2">
             <a href="?page=cart" class="nav-link-custom position-relative">
                 <i class="fas fa-shopping-bag"></i>
-                <?php if($cart_count>0): ?><span class="badge-cart"><?php echo $cart_count; ?></span><?php endif; ?>
+                <?php if ($cart_count > 0) { ?><span class="badge-cart"><?php echo $cart_count; ?></span><?php } ?>
             </a>
-            <?php if(isLoggedIn()): ?>
+            <?php if (isLoggedIn()) { ?>
                 <span class="d-none d-md-inline nav-link-custom" style="cursor:default"><i class="fas fa-user-circle"></i> <?php echo e($_SESSION['username']); ?></span>
                 <form method="post" class="d-inline"><button type="submit" name="action" value="logout" class="btn-nav btn-sm-custom">Keluar</button></form>
-            <?php else: ?>
+            <?php } else { ?>
                 <a href="?page=login" class="btn-nav btn-sm-custom">Masuk</a>
-            <?php endif; ?>
+            <?php } ?>
             <button class="d-md-none border-0 bg-transparent fs-5" onclick="document.getElementById('mobileMenu').classList.toggle('d-none')"><i class="fas fa-bars"></i></button>
         </div>
     </div>
     <div id="mobileMenu" class="d-none d-md-none mt-2 pt-2 border-top" style="border-color:var(--border)">
         <a href="?page=home" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Beranda</a>
         <a href="?page=home#products" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Katalog</a>
-        <?php if(isAdmin()): ?><a href="?page=admin_products" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Admin Panel</a><?php endif; ?>
-        <?php if(isLoggedIn()): ?><a href="?page=orders" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Pesanan Saya</a><?php endif; ?>
+        <?php if (isAdmin()) { ?><a href="?page=admin_products" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Admin Panel</a><?php } ?>
+        <?php if (isLoggedIn()) { ?><a href="?page=orders" class="d-block py-2 px-2 rounded" style="color:var(--fg)">Pesanan Saya</a><?php } ?>
     </div>
 </div>
 </nav>
@@ -422,22 +490,29 @@ a{text-decoration:none;color:inherit;transition:all .25s}
 <?php
 
 // ----- BERANDA -----
-if ($page === 'home'):
-    $where = "1=1";
-    $params = array();
-    if ($search) { $where .= " AND (name LIKE ? OR description LIKE ?)"; $params[] = "%$search%"; $params[] = "%$search%"; }
-    if ($cat_filter) { $where .= " AND category = ?"; $params[] = $cat_filter; }
+if ($page === 'home') {
+    $where = '1=1';
+    $params = [];
+    if ($search) {
+        $where .= ' AND (name LIKE ? OR description LIKE ?)';
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
+    if ($cat_filter) {
+        $where .= ' AND category = ?';
+        $params[] = $cat_filter;
+    }
     $products = $db->prepare("SELECT * FROM products WHERE $where ORDER BY id DESC");
     $products->execute($params);
     $products = $products->fetchAll();
-    $categories = $db->query("SELECT DISTINCT category FROM products ORDER BY category")->fetchAll(PDO::FETCH_COLUMN);
-?>
+    $categories = $db->query('SELECT DISTINCT category FROM products ORDER BY category')->fetchAll(PDO::FETCH_COLUMN);
+    ?>
 <!-- HERO -->
 <section class="hero-section">
     <div class="hero-petals">
-        <?php for($i=0;$i<15;$i++): ?>
-        <div class="petal" style="left:<?php echo rand(5,95); ?>%;animation-duration:<?php echo rand(8,18); ?>s;animation-delay:<?php echo rand(0,10); ?>s;background:<?php echo array('#f8bbd0','#c8e6c9','#ffe0b2','#b2dfdb','#f3e5f5','#fff9c4')[rand(0,5)]; ?>;width:<?php echo rand(12,28); ?>px;height:<?php echo rand(12,28); ?>px"></div>
-        <?php endfor; ?>
+        <?php for ($i = 0; $i < 15; $i++) { ?>
+        <div class="petal" style="left:<?php echo rand(5, 95); ?>%;animation-duration:<?php echo rand(8, 18); ?>s;animation-delay:<?php echo rand(0, 10); ?>s;background:<?php echo ['#f8bbd0', '#c8e6c9', '#ffe0b2', '#b2dfdb', '#f3e5f5', '#fff9c4'][rand(0, 5)]; ?>;width:<?php echo rand(12, 28); ?>px;height:<?php echo rand(12, 28); ?>px"></div>
+        <?php } ?>
     </div>
     <div class="container">
         <div class="row align-items-center">
@@ -493,16 +568,16 @@ if ($page === 'home'):
             </div>
         </div>
         <div class="filter-bar">
-            <a href="?page=home<?php echo $search?'&search='.$search:''; ?>" class="filter-btn <?php echo !$cat_filter?'active':''; ?>">Semua</a>
-            <?php foreach($categories as $cat): ?>
-            <a href="?page=home&category=<?php echo urlencode($cat); ?><?php echo $search?'&search='.$search:''; ?>" class="filter-btn <?php echo $cat_filter===$cat?'active':''; ?>"><?php echo e($cat); ?></a>
-            <?php endforeach; ?>
+            <a href="?page=home<?php echo $search ? '&search='.$search : ''; ?>" class="filter-btn <?php echo ! $cat_filter ? 'active' : ''; ?>">Semua</a>
+            <?php foreach ($categories as $cat) { ?>
+            <a href="?page=home&category=<?php echo urlencode($cat); ?><?php echo $search ? '&search='.$search : ''; ?>" class="filter-btn <?php echo $cat_filter === $cat ? 'active' : ''; ?>"><?php echo e($cat); ?></a>
+            <?php } ?>
         </div>
-        <?php if(empty($products)): ?>
+        <?php if (empty($products)) { ?>
         <div class="empty-state"><i class="fas fa-search"></i><h4>Produk tidak ditemukan</h4><p>Coba ubah kata kunci pencarian Anda</p></div>
-        <?php else: ?>
+        <?php } else { ?>
         <div class="row g-4">
-            <?php foreach($products as $p): ?>
+            <?php foreach ($products as $p) { ?>
             <div class="col-lg-3 col-md-4 col-sm-6 fade-up">
                 <div class="product-card h-100 d-flex flex-column">
                     <div class="product-card-img" style="background:<?php echo cardGradient($p['category']); ?>">
@@ -517,31 +592,31 @@ if ($page === 'home'):
                             <div>
                                 <div class="product-price"><?php echo rupiah($p['price']); ?></div>
                             </div>
-                            <?php if($p['stock'] > 0): ?>
-                            <form method="post" action="?page=home<?php echo $cat_filter?'&category='.$cat_filter:''; ?><?php echo $search?'&search='.$search:''; ?>#products">
+                            <?php if ($p['stock'] > 0) { ?>
+                            <form method="post" action="?page=home<?php echo $cat_filter ? '&category='.$cat_filter : ''; ?><?php echo $search ? '&search='.$search : ''; ?>#products">
                                 <input type="hidden" name="action" value="add_to_cart">
                                 <input type="hidden" name="product_id" value="<?php echo $p['id']; ?>">
                                 <input type="hidden" name="quantity" value="1">
-                                <input type="hidden" name="redirect" value="<?php echo e($page.($cat_filter?'&category='.$cat_filter:'').($search?'&search='.$search:'')); ?>">
+                                <input type="hidden" name="redirect" value="<?php echo e($page.($cat_filter ? '&category='.$cat_filter : '').($search ? '&search='.$search : '')); ?>">
                                 <button type="submit" class="btn-add-cart" title="Tambah ke keranjang"><i class="fas fa-plus"></i></button>
                             </form>
-                            <?php else: ?>
+                            <?php } else { ?>
                             <span class="btn-add-cart" style="background:#ccc;cursor:not-allowed" title="Habis"><i class="fas fa-ban"></i></span>
-                            <?php endif; ?>
+                            <?php } ?>
                         </div>
                     </div>
                 </div>
             </div>
-            <?php endforeach; ?>
+            <?php } ?>
         </div>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </section>
 
 <?php
-// ----- LOGIN -----
-elseif ($page === 'login'):
-?>
+    // ----- LOGIN -----
+} elseif ($page === 'login') {
+    ?>
 <section class="auth-wrapper">
     <div class="auth-card">
         <div class="text-center mb-3">
@@ -549,7 +624,7 @@ elseif ($page === 'login'):
         </div>
         <h2 class="text-center">Masuk ke Akun</h2>
         <p class="subtitle text-center">Selamat datang kembali di FloraBelle</p>
-        <?php if(isset($error)): ?><div class="alert alert-danger py-2" style="font-size:.88rem"><i class="fas fa-exclamation-circle me-1"></i> <?php echo e($error); ?></div><?php endif; ?>
+        <?php if (isset($error)) { ?><div class="alert alert-danger py-2" style="font-size:.88rem"><i class="fas fa-exclamation-circle me-1"></i> <?php echo e($error); ?></div><?php } ?>
         <form method="post">
             <input type="hidden" name="action" value="login">
             <div class="form-floating-custom"><label>Email</label><input type="email" name="email" required placeholder="email@contoh.com"></div>
@@ -565,9 +640,9 @@ elseif ($page === 'login'):
 </section>
 
 <?php
-// ----- REGISTER -----
-elseif ($page === 'register'):
-?>
+    // ----- REGISTER -----
+} elseif ($page === 'register') {
+    ?>
 <section class="auth-wrapper">
     <div class="auth-card">
         <div class="text-center mb-3">
@@ -575,7 +650,7 @@ elseif ($page === 'register'):
         </div>
         <h2 class="text-center">Buat Akun Baru</h2>
         <p class="subtitle text-center">Bergabung dan nikmati koleksi bunga terbaik</p>
-        <?php if(isset($error)): ?><div class="alert alert-danger py-2" style="font-size:.88rem"><i class="fas fa-exclamation-circle me-1"></i> <?php echo e($error); ?></div><?php endif; ?>
+        <?php if (isset($error)) { ?><div class="alert alert-danger py-2" style="font-size:.88rem"><i class="fas fa-exclamation-circle me-1"></i> <?php echo e($error); ?></div><?php } ?>
         <form method="post">
             <input type="hidden" name="action" value="register">
             <div class="form-floating-custom"><label>Nama Lengkap</label><input type="text" name="username" required placeholder="Nama Anda"></div>
@@ -589,11 +664,14 @@ elseif ($page === 'register'):
 </section>
 
 <?php
-// ----- KERANJANG -----
-elseif ($page === 'cart'):
-    if (!isLoggedIn()) { header("Location: ?page=login"); exit; }
-    $stmt = $db->prepare("SELECT c.*, p.name, p.price, p.image, p.category, p.stock FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=? ORDER BY c.id");
-    $stmt->execute(array($_SESSION['user_id']));
+    // ----- KERANJANG -----
+} elseif ($page === 'cart') {
+    if (! isLoggedIn()) {
+        header('Location: ?page=login');
+        exit;
+    }
+    $stmt = $db->prepare('SELECT c.*, p.name, p.price, p.image, p.category, p.stock FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=? ORDER BY c.id');
+    $stmt->execute([$_SESSION['user_id']]);
     $cart_items = $stmt->fetchAll();
     $cart_total = 0;
     $cart_qty_total = 0;
@@ -601,20 +679,20 @@ elseif ($page === 'cart'):
         $cart_total += $ci['price'] * $ci['quantity'];
         $cart_qty_total += $ci['quantity'];
     }
-?>
+    ?>
 <section class="section-padding">
     <div class="container">
         <div class="section-line"></div>
         <h2 class="section-title">Keranjang Belanja</h2>
         <p class="section-sub"><?php echo count($cart_items); ?> item dalam keranjang Anda</p>
-        <?php if(empty($cart_items)): ?>
+        <?php if (empty($cart_items)) { ?>
         <div class="empty-state"><i class="fas fa-shopping-bag"></i><h4>Keranjang masih kosong</h4><p>Mulai belanja dan temukan bunga favorit Anda</p><a href="?page=home#products" class="btn-primary-custom mt-3"><i class="fas fa-store"></i> Belanja Sekarang</a></div>
-        <?php else: ?>
+        <?php } else { ?>
         <form method="post">
             <input type="hidden" name="action" value="update_cart">
             <div class="row">
                 <div class="col-lg-8">
-                    <?php foreach($cart_items as $item): ?>
+                    <?php foreach ($cart_items as $item) { ?>
                     <div class="cart-item">
                         <div class="cart-item-emoji" style="background:<?php echo cardGradient($item['category']); ?>"><?php echo $item['image']; ?></div>
                         <div class="cart-item-info">
@@ -626,10 +704,10 @@ elseif ($page === 'cart'):
                             <input type="number" name="quantity[<?php echo $item['id']; ?>]" value="<?php echo $item['quantity']; ?>" min="0" max="<?php echo $item['stock']; ?>">
                             <button type="button" onclick="changeQty(this,1)"><i class="fas fa-plus"></i></button>
                         </div>
-                        <div class="text-end" style="min-width:100px"><strong style="font-size:.95rem"><?php echo rupiah($item['price']*$item['quantity']); ?></strong></div>
+                        <div class="text-end" style="min-width:100px"><strong style="font-size:.95rem"><?php echo rupiah($item['price'] * $item['quantity']); ?></strong></div>
                         <a href="?action=remove_cart&id=<?php echo $item['id']; ?>" class="text-danger" style="font-size:1.1rem" title="Hapus"><i class="fas fa-trash-alt"></i></a>
                     </div>
-                    <?php endforeach; ?>
+                    <?php } ?>
                     <button type="submit" class="btn-outline-custom btn-sm-custom mt-2"><i class="fas fa-refresh"></i> Perbarui Keranjang</button>
                 </div>
                 <div class="col-lg-4">
@@ -644,22 +722,32 @@ elseif ($page === 'cart'):
                 </div>
             </div>
         </form>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </section>
 
 <?php
-// ----- CHECKOUT -----
-elseif ($page === 'checkout'):
-    if (!isLoggedIn()) { header("Location: ?page=login"); exit; }
-    $stmt = $db->prepare("SELECT c.*, p.name, p.price, p.image, p.category FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=?");
-    $stmt->execute(array($_SESSION['user_id']));
+    // ----- CHECKOUT -----
+} elseif ($page === 'checkout') {
+    if (! isLoggedIn()) {
+        header('Location: ?page=login');
+        exit;
+    }
+    $stmt = $db->prepare('SELECT c.*, p.name, p.price, p.image, p.category FROM cart c JOIN products p ON c.product_id=p.id WHERE c.user_id=?');
+    $stmt->execute([$_SESSION['user_id']]);
     $checkout_items = $stmt->fetchAll();
     $checkout_total = 0;
-    foreach ($checkout_items as $ci) { $checkout_total += $ci['price'] * $ci['quantity']; }
-    if (empty($checkout_items)) { header("Location: ?page=cart"); exit; }
-    $user = $db->prepare("SELECT * FROM users WHERE id=?"); $user->execute(array($_SESSION['user_id'])); $user = $user->fetch();
-?>
+    foreach ($checkout_items as $ci) {
+        $checkout_total += $ci['price'] * $ci['quantity'];
+    }
+    if (empty($checkout_items)) {
+        header('Location: ?page=cart');
+        exit;
+    }
+    $user = $db->prepare('SELECT * FROM users WHERE id=?');
+    $user->execute([$_SESSION['user_id']]);
+    $user = $user->fetch();
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:900px">
         <div class="checkout-steps">
@@ -692,13 +780,13 @@ elseif ($page === 'checkout'):
                 <div class="col-lg-5">
                     <div class="order-summary">
                         <h5 style="font-size:1.05rem;margin-bottom:1rem">Pesanan Anda</h5>
-                        <?php foreach($checkout_items as $ci_item): ?>
+                        <?php foreach ($checkout_items as $ci_item) { ?>
                         <div class="d-flex align-items-center gap-2 mb-3 pb-3" style="border-bottom:1px solid var(--border)">
                             <div style="width:45px;height:45px;border-radius:10px;background:<?php echo cardGradient($ci_item['category']); ?>;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0"><?php echo $ci_item['image']; ?></div>
                             <div class="flex-grow-1" style="min-width:0"><div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?php echo e($ci_item['name']); ?></div><div style="font-size:.75rem;color:var(--muted)"><?php echo $ci_item['quantity']; ?>x <?php echo rupiah($ci_item['price']); ?></div></div>
-                            <div style="font-size:.88rem;font-weight:700"><?php echo rupiah($ci_item['price']*$ci_item['quantity']); ?></div>
+                            <div style="font-size:.88rem;font-weight:700"><?php echo rupiah($ci_item['price'] * $ci_item['quantity']); ?></div>
                         </div>
-                        <?php endforeach; ?>
+                        <?php } ?>
                         <div class="summary-row"><span>Subtotal</span><span><?php echo rupiah($checkout_total); ?></span></div>
                         <div class="summary-row"><span>Ongkir</span><span style="color:#2e7d32">Gratis</span></div>
                         <div class="summary-row total"><span>Total Bayar</span><span><?php echo rupiah($checkout_total); ?></span></div>
@@ -712,35 +800,37 @@ elseif ($page === 'checkout'):
 </section>
 
 <?php
-// ----- ORDER SUCCESS -----
-elseif ($page === 'order_success'):
-    $oid = (int)($_GET['oid'] ?? 0);
-    $order = $db->prepare("SELECT * FROM orders WHERE id=? AND user_id=?");
-    $order->execute(array($oid, $_SESSION['user_id'] ?? 0)); $order = $order->fetch();
-    $order_items = $db->prepare("SELECT * FROM order_items WHERE order_id=?");
-    $order_items->execute(array($oid)); $order_items = $order_items->fetchAll();
-?>
+    // ----- ORDER SUCCESS -----
+} elseif ($page === 'order_success') {
+    $oid = (int) ($_GET['oid'] ?? 0);
+    $order = $db->prepare('SELECT * FROM orders WHERE id=? AND user_id=?');
+    $order->execute([$oid, $_SESSION['user_id'] ?? 0]);
+    $order = $order->fetch();
+    $order_items = $db->prepare('SELECT * FROM order_items WHERE order_id=?');
+    $order_items->execute([$oid]);
+    $order_items = $order_items->fetchAll();
+    ?>
 <section class="section-padding">
     <div class="container text-center" style="max-width:600px">
         <div class="success-icon"><i class="fas fa-check"></i></div>
         <h2 class="section-title">Pesanan Berhasil!</h2>
         <p class="section-sub">Terima kasih telah berbelanja di FloraBelle</p>
-        <?php if($order): ?>
+        <?php if ($order) { ?>
         <div class="p-4 rounded text-start mb-3" style="background:var(--card);border:1px solid var(--border)">
-            <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">No. Pesanan</div><div class="col-8" style="font-weight:700">#FLB-<?php echo str_pad($order['id'],5,'0',STR_PAD_LEFT); ?></div></div>
-            <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">Tanggal</div><div class="col-8"><?php echo date('d M Y H:i',strtotime($order['created_at'])); ?></div></div>
+            <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">No. Pesanan</div><div class="col-8" style="font-weight:700">#FLB-<?php echo str_pad($order['id'], 5, '0', STR_PAD_LEFT); ?></div></div>
+            <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">Tanggal</div><div class="col-8"><?php echo date('d M Y H:i', strtotime($order['created_at'])); ?></div></div>
             <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">Pembayaran</div><div class="col-8 text-capitalize"><?php echo $order['payment_method']; ?></div></div>
             <div class="row mb-2"><div class="col-4" style="font-size:.85rem;color:var(--muted)">Status</div><div class="col-8"><span class="status-badge status-pending">Menunggu Konfirmasi</span></div></div>
             <div class="row"><div class="col-4" style="font-size:.85rem;color:var(--muted)">Total</div><div class="col-8" style="font-weight:900;font-size:1.15rem;color:var(--primary-dark)"><?php echo rupiah($order['total']); ?></div></div>
         </div>
         <h6 class="text-start mt-4 mb-3">Detail Item:</h6>
-        <?php foreach($order_items as $oi): ?>
+        <?php foreach ($order_items as $oi) { ?>
         <div class="d-flex justify-content-between align-items-center p-3 rounded mb-2" style="background:var(--card);border:1px solid var(--border);font-size:.9rem">
             <span><?php echo e($oi['product_name']); ?> (x<?php echo $oi['quantity']; ?>)</span>
-            <strong><?php echo rupiah($oi['price']*$oi['quantity']); ?></strong>
+            <strong><?php echo rupiah($oi['price'] * $oi['quantity']); ?></strong>
         </div>
-        <?php endforeach; ?>
-        <?php endif; ?>
+        <?php } ?>
+        <?php } ?>
         <div class="d-flex gap-3 justify-content-center mt-4">
             <a href="?page=orders" class="btn-outline-custom"><i class="fas fa-list"></i> Lihat Pesanan</a>
             <a href="?page=home#products" class="btn-primary-custom"><i class="fas fa-store"></i> Belanja Lagi</a>
@@ -749,31 +839,37 @@ elseif ($page === 'order_success'):
 </section>
 
 <?php
-// ----- RIWAYAT PESANAN -----
-elseif ($page === 'orders'):
-    if (!isLoggedIn()) { header("Location: ?page=login"); exit; }
-    $orders = $db->prepare("SELECT * FROM orders WHERE user_id=? ORDER BY id DESC");
-    $orders->execute(array($_SESSION['user_id'])); $orders = $orders->fetchAll();
-?>
+    // ----- RIWAYAT PESANAN -----
+} elseif ($page === 'orders') {
+    if (! isLoggedIn()) {
+        header('Location: ?page=login');
+        exit;
+    }
+    $orders = $db->prepare('SELECT * FROM orders WHERE user_id=? ORDER BY id DESC');
+    $orders->execute([$_SESSION['user_id']]);
+    $orders = $orders->fetchAll();
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:900px">
         <div class="section-line"></div>
         <h2 class="section-title">Riwayat Pesanan</h2>
         <p class="section-sub"><?php echo count($orders); ?> pesanan</p>
-        <?php if(empty($orders)): ?>
+        <?php if (empty($orders)) { ?>
         <div class="empty-state"><i class="fas fa-receipt"></i><h4>Belum ada pesanan</h4><p>Mulai belanja untuk membuat pesanan pertama Anda</p><a href="?page=home#products" class="btn-primary-custom mt-3"><i class="fas fa-store"></i> Belanja Sekarang</a></div>
-        <?php else: ?>
+        <?php } else { ?>
         <div class="rounded overflow-hidden" style="background:var(--card);border:1px solid var(--border);overflow-x:auto">
             <table class="table-custom">
                 <thead><tr><th>No. Pesanan</th><th>Tanggal</th><th>Total</th><th>Pembayaran</th><th>Status</th><th></th></tr></thead>
                 <tbody>
-                <?php foreach($orders as $o):
-                    $ois = $db->prepare("SELECT * FROM order_items WHERE order_id=?"); $ois->execute(array($o['id'])); $ois = $ois->fetchAll();
-                    $status_map = array('pending'=>'Menunggu','confirmed'=>'Dikonfirmasi','shipped'=>'Dikirim','delivered'=>'Selesai','cancelled'=>'Dibatalkan');
-                ?>
+                <?php foreach ($orders as $o) {
+                    $ois = $db->prepare('SELECT * FROM order_items WHERE order_id=?');
+                    $ois->execute([$o['id']]);
+                    $ois = $ois->fetchAll();
+                    $status_map = ['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'shipped' => 'Dikirim', 'delivered' => 'Selesai', 'cancelled' => 'Dibatalkan'];
+                    ?>
                 <tr>
-                    <td><strong>#FLB-<?php echo str_pad($o['id'],5,'0',STR_PAD_LEFT); ?></strong></td>
-                    <td><?php echo date('d M Y',strtotime($o['created_at'])); ?></td>
+                    <td><strong>#FLB-<?php echo str_pad($o['id'], 5, '0', STR_PAD_LEFT); ?></strong></td>
+                    <td><?php echo date('d M Y', strtotime($o['created_at'])); ?></td>
                     <td><strong><?php echo rupiah($o['total']); ?></strong></td>
                     <td class="text-capitalize" style="font-size:.82rem"><?php echo $o['payment_method']; ?></td>
                     <td><span class="status-badge status-<?php echo $o['status']; ?>"><?php echo isset($status_map[$o['status']]) ? $status_map[$o['status']] : $o['status']; ?></span></td>
@@ -781,26 +877,29 @@ elseif ($page === 'orders'):
                 </tr>
                 <tr id="detail-<?php echo $o['id']; ?>" style="display:none"><td colspan="6" style="background:var(--bg)">
                     <div class="p-3">
-                        <?php foreach($ois as $oi): ?>
-                        <div class="d-flex justify-content-between mb-1" style="font-size:.85rem"><span><?php echo e($oi['product_name']); ?> x<?php echo $oi['quantity']; ?></span><span><?php echo rupiah($oi['price']*$oi['quantity']); ?></span></div>
-                        <?php endforeach; ?>
-                        <?php if($o['customer_address']): ?><div style="font-size:.82rem;color:var(--muted);margin-top:.5rem"><i class="fas fa-map-marker-alt me-1"></i><?php echo e($o['customer_address']); ?></div><?php endif; ?>
+                        <?php foreach ($ois as $oi) { ?>
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.85rem"><span><?php echo e($oi['product_name']); ?> x<?php echo $oi['quantity']; ?></span><span><?php echo rupiah($oi['price'] * $oi['quantity']); ?></span></div>
+                        <?php } ?>
+                        <?php if ($o['customer_address']) { ?><div style="font-size:.82rem;color:var(--muted);margin-top:.5rem"><i class="fas fa-map-marker-alt me-1"></i><?php echo e($o['customer_address']); ?></div><?php } ?>
                     </div>
                 </td></tr>
-                <?php endforeach; ?>
+                <?php } ?>
                 </tbody>
             </table>
         </div>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </section>
 
 <?php
 // ----- ADMIN: PRODUK -----
-elseif ($page === 'admin_products'):
-    if (!isAdmin()) { header("Location: ?page=home"); exit; }
-    $all_products = $db->query("SELECT * FROM products ORDER BY id DESC")->fetchAll();
-?>
+} elseif ($page === 'admin_products') {
+    if (! isAdmin()) {
+        header('Location: ?page=home');
+        exit;
+    }
+    $all_products = $db->query('SELECT * FROM products ORDER BY id DESC')->fetchAll();
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:1100px">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -814,13 +913,13 @@ elseif ($page === 'admin_products'):
             <table class="table-custom">
                 <thead><tr><th>ID</th><th>Produk</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead>
                 <tbody>
-                <?php foreach($all_products as $ap): ?>
+                <?php foreach ($all_products as $ap) { ?>
                 <tr>
                     <td><?php echo $ap['id']; ?></td>
                     <td><div class="d-flex align-items-center gap-2"><span style="font-size:1.5rem"><?php echo $ap['image']; ?></span><div><div style="font-weight:600;font-size:.88rem"><?php echo e($ap['name']); ?></div><div style="font-size:.75rem;color:var(--muted);max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><?php echo e($ap['description']); ?></div></div></div></td>
                     <td><span style="font-size:.82rem"><?php echo e($ap['category']); ?></span></td>
                     <td><strong><?php echo rupiah($ap['price']); ?></strong></td>
-                    <td><span style="font-weight:600;<?php echo $ap['stock']<10?'color:#dc3545':''; ?>"><?php echo $ap['stock']; ?></span></td>
+                    <td><span style="font-weight:600;<?php echo $ap['stock'] < 10 ? 'color:#dc3545' : ''; ?>"><?php echo $ap['stock']; ?></span></td>
                     <td>
                         <div class="d-flex gap-1">
                             <a href="?page=admin_edit_product&id=<?php echo $ap['id']; ?>" class="btn btn-sm btn-outline-custom btn-sm-custom"><i class="fas fa-edit"></i></a>
@@ -828,7 +927,7 @@ elseif ($page === 'admin_products'):
                         </div>
                     </td>
                 </tr>
-                <?php endforeach; ?>
+                <?php } ?>
                 </tbody>
             </table>
         </div>
@@ -836,12 +935,15 @@ elseif ($page === 'admin_products'):
 </section>
 
 <?php
-// ----- ADMIN: TAMBAH PRODUK -----
-elseif ($page === 'admin_add_product'):
-    if (!isAdmin()) { header("Location: ?page=home"); exit; }
-    $all_categories = array('Bunga Potong','Buket','Bunga Pot','Rangkaian');
-    $emoji_options = array('🌹','🤍','🌻','🌷','💐','🦋','🌼','👰','🌸','🫧','🌺','🎂','🩷','🪴','🌵','💮','🏵️','🪻','🌷','🌱');
-?>
+    // ----- ADMIN: TAMBAH PRODUK -----
+} elseif ($page === 'admin_add_product') {
+    if (! isAdmin()) {
+        header('Location: ?page=home');
+        exit;
+    }
+    $all_categories = ['Bunga Potong', 'Buket', 'Bunga Pot', 'Rangkaian'];
+    $emoji_options = ['🌹', '🤍', '🌻', '🌷', '💐', '🦋', '🌼', '👰', '🌸', '🫧', '🌺', '🎂', '🩷', '🪴', '🌵', '💮', '🏵️', '🪻', '🌷', '🌱'];
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:600px">
         <div class="section-line"></div>
@@ -855,16 +957,16 @@ elseif ($page === 'admin_add_product'):
                 <div class="col-md-6"><div class="form-floating-custom"><label>Harga (Rp)</label><input type="number" name="price" min="0" required></div></div>
                 <div class="col-md-6"><div class="form-floating-custom"><label>Stok</label><input type="number" name="stock" min="0" value="50" required></div></div>
             </div>
-            <div class="form-floating-custom"><label>Kategori</label><select name="category" required><?php foreach($all_categories as $c): ?><option value="<?php echo $c; ?>"><?php echo $c; ?></option><?php endforeach; ?></select></div>
+            <div class="form-floating-custom"><label>Kategori</label><select name="category" required><?php foreach ($all_categories as $c) { ?><option value="<?php echo $c; ?>"><?php echo $c; ?></option><?php } ?></select></div>
             <div class="form-floating-custom">
                 <label>Ikon Produk</label>
                 <div class="d-flex flex-wrap gap-2 p-2 rounded" style="border:1.5px solid var(--border);background:var(--bg)" id="emojiPicker">
-                    <?php foreach($emoji_options as $em): ?>
+                    <?php foreach ($emoji_options as $em) { ?>
                     <label style="cursor:pointer;font-size:1.5rem;padding:.3rem;border-radius:8px;transition:all .2s" class="emoji-opt">
-                        <input type="radio" name="image" value="<?php echo $em; ?>" <?php echo $em==='🌹'?'checked':''; ?> style="display:none">
+                        <input type="radio" name="image" value="<?php echo $em; ?>" <?php echo $em === '🌹' ? 'checked' : ''; ?> style="display:none">
                         <span><?php echo $em; ?></span>
                     </label>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </div>
             </div>
             <div class="d-flex gap-2 mt-3">
@@ -876,15 +978,23 @@ elseif ($page === 'admin_add_product'):
 </section>
 
 <?php
-// ----- ADMIN: EDIT PRODUK -----
-elseif ($page === 'admin_edit_product'):
-    if (!isAdmin()) { header("Location: ?page=home"); exit; }
-    $edit_id = (int)($_GET['id'] ?? 0);
-    $ep = $db->prepare("SELECT * FROM products WHERE id=?"); $ep->execute(array($edit_id)); $ep = $ep->fetch();
-    if (!$ep) { header("Location: ?page=admin_products"); exit; }
-    $all_categories = array('Bunga Potong','Buket','Bunga Pot','Rangkaian');
-    $emoji_options = array('🌹','🤍','🌻','🌷','💐','🦋','🌼','👰','🌸','🫧','🌺','🎂','🩷','🪴','🌵','💮','🏵️','🪻','🌷','🌱');
-?>
+    // ----- ADMIN: EDIT PRODUK -----
+} elseif ($page === 'admin_edit_product') {
+    if (! isAdmin()) {
+        header('Location: ?page=home');
+        exit;
+    }
+    $edit_id = (int) ($_GET['id'] ?? 0);
+    $ep = $db->prepare('SELECT * FROM products WHERE id=?');
+    $ep->execute([$edit_id]);
+    $ep = $ep->fetch();
+    if (! $ep) {
+        header('Location: ?page=admin_products');
+        exit;
+    }
+    $all_categories = ['Bunga Potong', 'Buket', 'Bunga Pot', 'Rangkaian'];
+    $emoji_options = ['🌹', '🤍', '🌻', '🌷', '💐', '🦋', '🌼', '👰', '🌸', '🫧', '🌺', '🎂', '🩷', '🪴', '🌵', '💮', '🏵️', '🪻', '🌷', '🌱'];
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:600px">
         <div class="section-line"></div>
@@ -899,16 +1009,16 @@ elseif ($page === 'admin_edit_product'):
                 <div class="col-md-6"><div class="form-floating-custom"><label>Harga (Rp)</label><input type="number" name="price" min="0" value="<?php echo $ep['price']; ?>" required></div></div>
                 <div class="col-md-6"><div class="form-floating-custom"><label>Stok</label><input type="number" name="stock" min="0" value="<?php echo $ep['stock']; ?>" required></div></div>
             </div>
-            <div class="form-floating-custom"><label>Kategori</label><select name="category" required><?php foreach($all_categories as $c): ?><option value="<?php echo $c; ?>" <?php echo $ep['category']===$c?'selected':''; ?>><?php echo $c; ?></option><?php endforeach; ?></select></div>
+            <div class="form-floating-custom"><label>Kategori</label><select name="category" required><?php foreach ($all_categories as $c) { ?><option value="<?php echo $c; ?>" <?php echo $ep['category'] === $c ? 'selected' : ''; ?>><?php echo $c; ?></option><?php } ?></select></div>
             <div class="form-floating-custom">
                 <label>Ikon Produk</label>
                 <div class="d-flex flex-wrap gap-2 p-2 rounded" style="border:1.5px solid var(--border);background:var(--bg)" id="emojiPicker">
-                    <?php foreach($emoji_options as $em): ?>
+                    <?php foreach ($emoji_options as $em) { ?>
                     <label style="cursor:pointer;font-size:1.5rem;padding:.3rem;border-radius:8px;transition:all .2s" class="emoji-opt">
-                        <input type="radio" name="image" value="<?php echo $em; ?>" <?php echo $ep['image']===$em?'checked':''; ?> style="display:none">
+                        <input type="radio" name="image" value="<?php echo $em; ?>" <?php echo $ep['image'] === $em ? 'checked' : ''; ?> style="display:none">
                         <span><?php echo $em; ?></span>
                     </label>
-                    <?php endforeach; ?>
+                    <?php } ?>
                 </div>
             </div>
             <div class="d-flex gap-2 mt-3">
@@ -920,31 +1030,36 @@ elseif ($page === 'admin_edit_product'):
 </section>
 
 <?php
-// ----- ADMIN: PESANAN -----
-elseif ($page === 'admin_orders'):
-    if (!isAdmin()) { header("Location: ?page=home"); exit; }
-    $all_orders = $db->query("SELECT o.*, u.username FROM orders o LEFT JOIN users u ON o.user_id=u.id ORDER BY o.id DESC")->fetchAll();
-    $status_options = array('pending','confirmed','shipped','delivered','cancelled');
-?>
+    // ----- ADMIN: PESANAN -----
+} elseif ($page === 'admin_orders') {
+    if (! isAdmin()) {
+        header('Location: ?page=home');
+        exit;
+    }
+    $all_orders = $db->query('SELECT o.*, u.username FROM orders o LEFT JOIN users u ON o.user_id=u.id ORDER BY o.id DESC')->fetchAll();
+    $status_options = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
+    ?>
 <section class="section-padding">
     <div class="container" style="max-width:1100px">
         <div class="section-line"></div>
         <h2 class="section-title">Kelola Pesanan</h2>
         <p class="section-sub"><?php echo count($all_orders); ?> pesanan masuk</p>
-        <?php if(empty($all_orders)): ?>
+        <?php if (empty($all_orders)) { ?>
         <div class="empty-state"><i class="fas fa-inbox"></i><h4>Belum ada pesanan</h4></div>
-        <?php else: ?>
+        <?php } else { ?>
         <div class="rounded overflow-hidden" style="background:var(--card);border:1px solid var(--border);overflow-x:auto">
             <table class="table-custom">
                 <thead><tr><th>No. Pesanan</th><th>Customer</th><th>Tanggal</th><th>Total</th><th>Bayar</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
-                <?php foreach($all_orders as $ao):
-                    $aois = $db->prepare("SELECT * FROM order_items WHERE order_id=?"); $aois->execute(array($ao['id'])); $aois = $aois->fetchAll();
-                ?>
+                <?php foreach ($all_orders as $ao) {
+                    $aois = $db->prepare('SELECT * FROM order_items WHERE order_id=?');
+                    $aois->execute([$ao['id']]);
+                    $aois = $aois->fetchAll();
+                    ?>
                 <tr>
-                    <td><strong>#FLB-<?php echo str_pad($ao['id'],5,'0',STR_PAD_LEFT); ?></strong></td>
+                    <td><strong>#FLB-<?php echo str_pad($ao['id'], 5, '0', STR_PAD_LEFT); ?></strong></td>
                     <td><?php echo e($ao['customer_name'] ?: $ao['username']); ?></td>
-                    <td><?php echo date('d M Y H:i',strtotime($ao['created_at'])); ?></td>
+                    <td><?php echo date('d M Y H:i', strtotime($ao['created_at'])); ?></td>
                     <td><strong><?php echo rupiah($ao['total']); ?></strong></td>
                     <td class="text-capitalize" style="font-size:.82rem"><?php echo $ao['payment_method']; ?></td>
                     <td><span class="status-badge status-<?php echo $ao['status']; ?>"><?php echo $ao['status']; ?></span></td>
@@ -954,7 +1069,7 @@ elseif ($page === 'admin_orders'):
                                 <input type="hidden" name="action" value="update_order_status">
                                 <input type="hidden" name="order_id" value="<?php echo $ao['id']; ?>">
                                 <select name="status" class="form-select form-select-sm" style="font-size:.78rem;width:auto;padding:.2rem .5rem;border-radius:6px">
-                                    <?php foreach($status_options as $so): ?><option value="<?php echo $so; ?>" <?php echo $ao['status']===$so?'selected':''; ?>><?php echo $so; ?></option><?php endforeach; ?>
+                                    <?php foreach ($status_options as $so) { ?><option value="<?php echo $so; ?>" <?php echo $ao['status'] === $so ? 'selected' : ''; ?>><?php echo $so; ?></option><?php } ?>
                                 </select>
                                 <button type="submit" class="btn btn-sm btn-primary-custom btn-sm-custom" style="padding:.2rem .5rem"><i class="fas fa-check"></i></button>
                             </form>
@@ -964,25 +1079,25 @@ elseif ($page === 'admin_orders'):
                 </tr>
                 <tr id="detail-<?php echo $ao['id']; ?>" style="display:none"><td colspan="7" style="background:var(--bg)">
                     <div class="p-3">
-                        <?php foreach($aois as $oi): ?>
-                        <div class="d-flex justify-content-between mb-1" style="font-size:.85rem"><span><?php echo e($oi['product_name']); ?> x<?php echo $oi['quantity']; ?></span><span><?php echo rupiah($oi['price']*$oi['quantity']); ?></span></div>
-                        <?php endforeach; ?>
-                        <?php if($ao['customer_phone']): ?><div style="font-size:.82rem;color:var(--muted);margin-top:.5rem"><i class="fas fa-phone me-1"></i><?php echo e($ao['customer_phone']); ?></div><?php endif; ?>
-                        <?php if($ao['customer_address']): ?><div style="font-size:.82rem;color:var(--muted)"><i class="fas fa-map-marker-alt me-1"></i><?php echo e($ao['customer_address']); ?></div><?php endif; ?>
-                        <?php if($ao['notes']): ?><div style="font-size:.82rem;color:var(--muted)"><i class="fas fa-sticky-note me-1"></i><?php echo e($ao['notes']); ?></div><?php endif; ?>
+                        <?php foreach ($aois as $oi) { ?>
+                        <div class="d-flex justify-content-between mb-1" style="font-size:.85rem"><span><?php echo e($oi['product_name']); ?> x<?php echo $oi['quantity']; ?></span><span><?php echo rupiah($oi['price'] * $oi['quantity']); ?></span></div>
+                        <?php } ?>
+                        <?php if ($ao['customer_phone']) { ?><div style="font-size:.82rem;color:var(--muted);margin-top:.5rem"><i class="fas fa-phone me-1"></i><?php echo e($ao['customer_phone']); ?></div><?php } ?>
+                        <?php if ($ao['customer_address']) { ?><div style="font-size:.82rem;color:var(--muted)"><i class="fas fa-map-marker-alt me-1"></i><?php echo e($ao['customer_address']); ?></div><?php } ?>
+                        <?php if ($ao['notes']) { ?><div style="font-size:.82rem;color:var(--muted)"><i class="fas fa-sticky-note me-1"></i><?php echo e($ao['notes']); ?></div><?php } ?>
                     </div>
                 </td></tr>
-                <?php endforeach; ?>
+                <?php } ?>
                 </tbody>
             </table>
         </div>
-        <?php endif; ?>
+        <?php } ?>
     </div>
 </section>
 
-<?php else: ?>
+<?php } else { ?>
 <section class="section-padding"><div class="container text-center"><h2>Halaman tidak ditemukan</h2><a href="?page=home" class="btn-primary-custom mt-3">Kembali ke Beranda</a></div></section>
-<?php endif; ?>
+<?php } ?>
 
 <!-- FOOTER -->
 <footer class="footer">

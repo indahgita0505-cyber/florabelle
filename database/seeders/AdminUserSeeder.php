@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class AdminUserSeeder extends Seeder
 {
@@ -12,10 +12,10 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Karena model User memiliki cast 'password' => 'hashed', 
+        // Karena model User memiliki cast 'password' => 'hashed',
         // kita CUKUP memasukkan string biasa dan Laravel akan meng-hash-nya secara otomatis.
         // Jika kita menggunakan Hash::make() di sini, maka password akan ter-hash dua kali!
-        
+
         User::updateOrCreate(
             ['email' => 'admin@florabelle.id'], // Cari berdasarkan email ini
             [
